@@ -1,51 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUpDown, SlidersHorizontal, X } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 
 import FilterPage from "@/components/ui/filter";
-import Navbar from "@/components/ui/navbar";
 import { EventCard } from "@/components/event-card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useGetEventsQuery } from "@/lib/features/events/eventsApi";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const PRICE_RANGES = ["50-100", "100-200", "200-300", "400-500"] as const;
-const SORT_OPTIONS = [
-  "Newest",
-  "Oldest",
-  "Price: Low to High",
-  "Price: High to Low",
-  "Rating: High to Low",
-] as const;
 
-const SORT_QUERY_MAP: Record<(typeof SORT_OPTIONS)[number], string> = {
-  Newest: "startDate,desc",
-  Oldest: "startDate,asc",
-  "Price: Low to High": "price,asc",
-  "Price: High to Low": "price,desc",
-  "Rating: High to Low": "rating,desc",
-};
-
-const INITIAL_VISIBLE_COUNT = 8;
-const SHOW_MORE_STEP = 8;
-const FETCH_SIZE = 200;
+const PAGE_SIZE = 8;
 
 export default function EventsPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeWhen, setActiveWhen] = useState("All");
   const [activeWhere, setActiveWhere] = useState("All");
   const [activePrice, setActivePrice] = useState("All");
-  const [activeSort, setActiveSort] =
-    useState<(typeof SORT_OPTIONS)[number]>("Newest");
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
+  const [currentPage, setCurrentPage] = useState(0);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-
-  const sortQuery = SORT_QUERY_MAP[activeSort];
 
   const {
     data: eventsData,
@@ -54,8 +35,7 @@ export default function EventsPage() {
     error,
   } = useGetEventsQuery({
     page: 0,
-    size: FETCH_SIZE,
-    sort: sortQuery,
+    size: 200,
   });
 
   useEffect(() => {
@@ -67,6 +47,8 @@ export default function EventsPage() {
   }, [isFilterOpen]);
 
   const events = eventsData?.content ?? [];
+  const totalElements = eventsData?.totalElements ?? 0;
+
   const allFilterEvents = events;
 
   const getWhenLabel = (dateValue: string) => {
@@ -141,19 +123,20 @@ export default function EventsPage() {
     return matchesCategory && matchesWhen && matchesWhere && matchesPrice;
   });
 
-  const visibleEvents = filteredEvents.slice(0, visibleCount);
-  const hasMoreEvents = visibleCount < filteredEvents.length;
+  // Pagination for filtered results
+  const totalFilteredPages = Math.ceil(filteredEvents.length / PAGE_SIZE);
+  const paginatedEvents = filteredEvents.slice(
+    currentPage * PAGE_SIZE,
+    (currentPage + 1) * PAGE_SIZE,
+  );
 
   useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE_COUNT);
-  }, [activeCategory, activeWhen, activeWhere, activePrice, activeSort]);
+    setCurrentPage(0);
+  }, [activeCategory, activeWhen, activeWhere, activePrice]);
 
   if (isLoading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <section className="pb-8 pt-10">
-          <Navbar />
-        </section>
         <section className="pb-5 pt-6 sm:hidden">
           <button
             type="button"
@@ -190,10 +173,6 @@ export default function EventsPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <section className="pb-8 pt-10">
-        <Navbar />
-      </section>
-
       <section className="pb-5 pt-6 sm:hidden">
         <button
           type="button"
@@ -232,38 +211,9 @@ export default function EventsPage() {
         </div>
       )}
 
-      <section className="mb-5 flex justify-end">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
-            >
-              <ArrowUpDown className="size-4 text-muted-foreground" />
-              Sort: {activeSort}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {SORT_OPTIONS.map((option) => (
-              <DropdownMenuItem
-                key={option}
-                onClick={() => setActiveSort(option)}
-                className={
-                  activeSort === option
-                    ? "bg-brand-main/10 text-brand-main"
-                    : undefined
-                }
-              >
-                {option}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </section>
-
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {visibleEvents.length > 0 ? (
-          visibleEvents.map((event) => (
+        {paginatedEvents.length > 0 ? (
+          paginatedEvents.map((event) => (
             <EventCard key={event.id} event={event} />
           ))
         ) : (
@@ -273,15 +223,55 @@ export default function EventsPage() {
         )}
       </section>
 
-      {hasMoreEvents && (
-        <section className="mt-8 flex justify-center">
-          <button
-            type="button"
-            onClick={() => setVisibleCount((count) => count + SHOW_MORE_STEP)}
-            className="inline-flex items-center justify-center rounded-2xl border border-brand-main bg-brand-main px-6 py-3 text-sm font-semibold tracking-wide text-white transition hover:bg-brand-main/90"
-          >
-            Show More
-          </button>
+      {totalFilteredPages > 1 && (
+        <section className="mt-12 flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(0, prev - 1))
+                  }
+                  disabled={currentPage === 0}
+                />
+              </PaginationItem>
+
+              {Array.from(
+                { length: Math.min(totalFilteredPages, 5) },
+                (_, i) => {
+                  const pageNum = i;
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(pageNum)}
+                        isActive={currentPage === pageNum}
+                      >
+                        {pageNum + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                },
+              )}
+
+              {totalFilteredPages > 5 &&
+                currentPage < totalFilteredPages - 3 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() =>
+                    setCurrentPage((prev) =>
+                      Math.min(totalFilteredPages - 1, prev + 1),
+                    )
+                  }
+                  disabled={currentPage === totalFilteredPages - 1}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </section>
       )}
 

@@ -80,16 +80,16 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 w-full bg-transparent px-4 py-4 text-black dark:text-white sm:px-6 lg:px-8">
+    <header className="fixed inset-x-0 top-0 z-50 w-full bg-transparent px-4 py-4 text-foreground sm:px-6 lg:px-8">
       <div
         className={[
-          "mx-auto w-full max-w-7xl rounded-[28px] transition-all duration-200",
+          "mx-auto w-full max-w-7xl rounded-[28px] transition-colors duration-200",
           hasScrolled
-            ? "border border-border bg-white/80 shadow-sm backdrop-blur-md dark:bg-black/80"
+            ? "border border-border bg-background"
             : "border border-transparent bg-transparent shadow-none",
         ].join(" ")}
       >
-        <div className="flex min-h-18 items-center justify-between gap-4 px-4 py-3 sm:min-h-20 sm:px-6 lg:px-8">
+        <div className="flex min-h-15 items-center justify-between gap-3 px-3 py-2 sm:min-h-16 sm:px-4 lg:px-6">
           {/* Mobile Menu Button */}
           <button
             type="button"
@@ -100,9 +100,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
             onClick={() => setIsOpen((value) => !value)}
             className={[
               "inline-flex size-11 items-center justify-center rounded-full transition lg:hidden",
-              hasScrolled
-                ? "text-black dark:text-white"
-                : "text-black dark:text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]",
+              "text-foreground",
             ].join(" ")}
           >
             <span className="sr-only">Menu</span>
@@ -151,13 +149,9 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
                   aria-current={isActive ? "page" : undefined}
                   className={[
                     "group relative rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 xl:px-5",
-                    hasScrolled
-                      ? isActive
-                        ? "text-black dark:text-white"
-                        : "text-black/70 hover:text-black dark:text-muted-foreground dark:hover:text-white"
-                      : isActive
-                        ? "text-black dark:text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)]"
-                        : "text-black/75 hover:text-black dark:text-white/85 dark:hover:text-white",
+                    isActive
+                      ? "text-foreground"
+                      : "text-foreground/70 hover:text-foreground",
                   ].join(" ")}
                 >
                   <span
@@ -166,7 +160,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
                       "absolute inset-x-2 inset-y-1 -z-10 rounded-full blur-lg transition-opacity duration-200",
                       isActive
                         ? "bg-[radial-gradient(circle_at_center,rgba(193,79,230,0.38),rgba(193,79,230,0.12)_40%,transparent_76%)] opacity-100"
-                        : "bg-[radial-gradient(circle_at_center,rgba(193,79,230,0.32),rgba(193,79,230,0.08)_40%,transparent_76%)] opacity-0 group-hover:opacity-100",
+                        : "bg-[radial-gradient(circle_at_center,rgba(193,79,230,0.28),rgba(193,79,230,0.08)_40%,transparent_76%)] opacity-0 group-hover:opacity-100",
                     ].join(" ")}
                   />
                   <span className="relative z-10 block">
@@ -193,7 +187,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
                       username={user?.username}
                       onLogout={handleLogout}
                     />
-                    <span className="text-sm font-medium text-foreground max-w-25 truncate pr-1">
+                    <span className="max-w-25 truncate pr-1 text-sm font-medium text-foreground">
                       {user?.username ?? "User"}
                     </span>
                   </div>
@@ -202,7 +196,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
                 {/* Mobile: Just show logout icon */}
                 <button
                   onClick={handleLogout}
-                  className="lg:hidden inline-flex size-11 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition"
+                  className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive lg:hidden"
                 >
                   <LogOut className="size-5" />
                 </button>

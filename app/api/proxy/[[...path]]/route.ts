@@ -13,21 +13,47 @@ export async function GET(
 
     console.log("Proxying GET to:", url);
 
+    // Define public endpoints that don't require authentication
+    const isPublicEndpoint = pathString.startsWith("events");
+
     // Get authorization header from request or cookies
     const authHeader = request.headers.get("authorization");
     const cookieStore = await cookies();
-    const token = cookieStore.get("session_token")?.value;
+
+    // Try Better Auth session cookie first, then fallback to session_token
+    let sessionCookie = cookieStore.get("auth_session")?.value;
+    if (!sessionCookie) {
+      sessionCookie = cookieStore.get("session_token")?.value;
+    }
 
     const headers: Record<string, string> = {
       Accept: "application/json",
+      "User-Agent": "Event-Booking-Frontend/1.0",
     };
 
-    // Add authorization header
-    if (authHeader) {
-      headers["Authorization"] = authHeader;
-    } else if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    // For public endpoints, don't send auth at all
+    // For private endpoints, add auth if available
+    if (!isPublicEndpoint) {
+      if (authHeader) {
+        headers["Authorization"] = authHeader;
+      } else if (sessionCookie) {
+        headers["Authorization"] = `Bearer ${sessionCookie}`;
+      }
+
+      // Only forward cookies for private endpoints
+      const cookieHeader = request.headers.get("cookie");
+      if (cookieHeader) {
+        headers["Cookie"] = cookieHeader;
+      }
+    } else {
+      // For public endpoints - no auth, no cookies - just plain headers
+      console.log("Public endpoint - no auth headers sent");
     }
+
+    console.log("Request headers:", {
+      ...headers,
+      Cookie: headers.Cookie ? "***" : undefined,
+    });
 
     const res = await fetch(url, {
       method: "GET",
@@ -36,7 +62,11 @@ export async function GET(
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error("Proxy error response:", errorText);
+      const errorStatus = res.status;
+      console.error(
+        `Proxy error (${errorStatus}):`,
+        errorText.substring(0, 200),
+      );
       return NextResponse.json(
         { message: "API error", details: errorText },
         { status: res.status },
@@ -66,21 +96,42 @@ export async function POST(
     const body = await request.json();
     console.log("Proxying POST to:", url, "body:", body);
 
+    // Define public endpoints that don't require authentication
+    const isPublicEndpoint = pathString.startsWith("events");
+
     // Get authorization header from request or cookies
     const authHeader = request.headers.get("authorization");
     const cookieStore = await cookies();
-    const token = cookieStore.get("session_token")?.value;
+
+    // Try Better Auth session cookie first, then fallback to session_token
+    let sessionCookie = cookieStore.get("auth_session")?.value;
+    if (!sessionCookie) {
+      sessionCookie = cookieStore.get("session_token")?.value;
+    }
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Accept: "application/json",
+      "User-Agent": "Event-Booking-Frontend/1.0",
     };
 
-    // Add authorization header
-    if (authHeader) {
-      headers["Authorization"] = authHeader;
-    } else if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    // For public endpoints, don't send auth at all
+    // For private endpoints, add auth if available
+    if (!isPublicEndpoint) {
+      if (authHeader) {
+        headers["Authorization"] = authHeader;
+      } else if (sessionCookie) {
+        headers["Authorization"] = `Bearer ${sessionCookie}`;
+      }
+
+      // Only forward cookies for private endpoints
+      const cookieHeader = request.headers.get("cookie");
+      if (cookieHeader) {
+        headers["Cookie"] = cookieHeader;
+      }
+    } else {
+      // For public endpoints - no auth, no cookies - just plain headers
+      console.log("Public endpoint - no auth headers sent");
     }
 
     const res = await fetch(url, {
@@ -91,7 +142,11 @@ export async function POST(
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error("Proxy error response:", errorText);
+      const errorStatus = res.status;
+      console.error(
+        `Proxy error (${errorStatus}):`,
+        errorText.substring(0, 200),
+      );
       return NextResponse.json(
         { message: "API error", details: errorText },
         { status: res.status },

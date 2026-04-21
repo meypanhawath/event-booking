@@ -4,6 +4,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import StoreProvider from "../components/StoreProvider";
+import { Tooltip } from "@/components/ui/tooltip";
+import Navbar from "@/components/ui/navbar";
+import Footer from "@/components/ui/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +30,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <StoreProvider>
+            <Navbar />
             {children}
             <Toaster
               position="top-right"
@@ -38,6 +42,7 @@ export default function RootLayout({
                 },
               }}
             />
+            <Footer />
           </StoreProvider>
         </ThemeProvider>
       </body>

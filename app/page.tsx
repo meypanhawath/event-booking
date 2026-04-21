@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { Goal, Music4, PartyPopper, Ticket } from "lucide-react";
 import Link from "next/link";
 
 import Navbar from "@/components/ui/navbar";
+import { TrustByCompany } from "@/components/ui/trust-by-company";
+
 import { EventCard } from "@/components/event-card";
 import { useGetEventsQuery } from "@/lib/features/events/eventsApi";
+import { Review } from "@/components/ui/review";
 
 const categories = [
   {
@@ -24,34 +26,23 @@ const categories = [
     icon: Goal,
     accent: "from-amber-500/20 to-orange-500/10 text-amber-500",
   },
-  {
-    label: "Festivals",
-    icon: PartyPopper,
-    accent: "from-emerald-500/20 to-lime-500/10 text-emerald-500",
-  },
 ] as const;
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState("All");
-
   // RTK Query hook - replaces your useEffect + fetch
   const { data: eventsData, isLoading, isError, error } = useGetEventsQuery();
 
   // Extract events from paginated response
   const events = eventsData?.content ?? [];
 
-  // Get unique categories from API data
-  const categoryFilters = [
-    "All",
-    ...Array.from(new Set(events.map((event) => event.category.name))),
-  ];
+  // Section 2: show football events only.
+  const footballEvents = events
+    .filter((event) => event.category.name.toLowerCase().includes("football"))
+    .slice(0, 4);
 
-  // Filter events by category
-  const visibleEvents = events
-    .filter(
-      (event) =>
-        activeCategory === "All" || event.category.name === activeCategory,
-    )
+  // Section 3: show technology events only.
+  const technologyEvents = events
+    .filter((event) => event.category.name.toLowerCase().includes("technology"))
     .slice(0, 4);
 
   // Loading skeleton
@@ -106,7 +97,7 @@ export default function Home() {
 
               {/* Category Quick Select */}
               <div className="mt-12 w-full max-w-5xl rounded-[22px] border border-border bg-card/90 shadow-[0_18px_50px_rgba(0,0,0,0.2)] backdrop-blur dark:shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
-                <div className="grid grid-cols-2 gap-2 border-b border-border p-4 sm:grid-cols-4 sm:gap-0 sm:p-5">
+                <div className="flex flex-wrap gap-2 border-b border-border p-4 sm:gap-0 sm:p-5 justify-around">
                   {categories.map(({ label, icon: Icon, accent }) => (
                     <button
                       key={label}
@@ -131,10 +122,9 @@ export default function Home() {
         <section className="container mx-auto mt-12 px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Events</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Discover amazing events happening near you
-              </p>
+              <h2 className="text-2xl font-bold text-foreground">
+                Football Events
+              </h2>
             </div>
             <Link
               className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
@@ -142,23 +132,6 @@ export default function Home() {
             >
               See all
             </Link>
-          </div>
-
-          {/* Category Filters */}
-          <div className="mt-6 flex flex-wrap gap-2">
-            {categoryFilters.map((item) => (
-              <button
-                key={item}
-                onClick={() => setActiveCategory(item)}
-                className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
-                  activeCategory === item
-                    ? "border-accent/50 bg-accent/15 text-accent"
-                    : "border-border bg-card text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {item}
-              </button>
-            ))}
           </div>
 
           {/* Error State */}
@@ -174,73 +147,57 @@ export default function Home() {
 
           {/* Events Grid */}
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {visibleEvents.map((event) => (
+            {footballEvents.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>
 
           {/* Empty State */}
-          {!isLoading && !isError && visibleEvents.length === 0 && (
+          {!isLoading && !isError && footballEvents.length === 0 && (
             <div className="mt-12 text-center">
-              <p className="text-muted-foreground">
-                No events found in this category.
-              </p>
+              <p className="text-muted-foreground">No football events found.</p>
             </div>
           )}
         </section>
 
-        {/* Top Organizers Section (replacing Top Singers) */}
-        <section className="container mx-auto mt-20 px-4 pb-20 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-foreground">
-              Top Organizers
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Featured event organizers from our community.
-            </p>
+        {/* Technology Events Section */}
+        <section className="container mx-auto mt-12 px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">
+                Technology Events
+              </h2>
+            </div>
+            <Link
+              className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
+              href="/events"
+            >
+              See all
+            </Link>
           </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from(
-              new Map(
-                events
-                  .filter((e) => e.organizer)
-                  .map((e) => [e.organizer!.uuid, e.organizer]),
-              ).values(),
-            )
-              .slice(0, 8)
-              .map((organizer, index) => (
-                <article
-                  key={organizer!.uuid}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card/70 px-4 py-3"
-                >
-                  <div
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white ${
-                      [
-                        "from-orange-500 to-pink-600",
-                        "from-blue-400 to-cyan-600",
-                        "from-violet-500 to-fuchsia-700",
-                        "from-zinc-500 to-zinc-800",
-                        "from-red-500 to-amber-500",
-                        "from-emerald-400 to-teal-600",
-                        "from-yellow-400 to-orange-600",
-                        "from-indigo-400 to-purple-600",
-                      ][index % 8]
-                    } bg-linear-to-br`}
-                  >
-                    {organizer!.orgName.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="truncate text-sm font-medium text-foreground">
-                      {organizer!.orgName}
-                    </h3>
-                    <p className="truncate text-xs text-muted-foreground">
-                      @{organizer!.username}
-                    </p>
-                  </div>
-                </article>
-              ))}
+          {/* Events Grid */}
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {technologyEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
           </div>
+
+          {/* Empty State */}
+          {!isLoading && !isError && technologyEvents.length === 0 && (
+            <div className="mt-12 text-center">
+              <p className="text-muted-foreground">
+                No technology events found.
+              </p>
+            </div>
+          )}
+        </section>
+        <section className="container mx-auto mt-12 px-4 sm:px-6 lg:px-8  w-full pt-20">
+          <TrustByCompany />
+        </section>
+
+        <section className="mt-10 w-full pt-15 pb-15">
+          <Review />
         </section>
       </div>
     </main>

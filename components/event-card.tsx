@@ -63,7 +63,7 @@ export function EventCard({ event }: EventCardProps) {
             {event.title}
           </h3>
 
-          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+          <p className="mt-1 line-clamp-1 overflow-hidden text-sm text-muted-foreground [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:1]">
             {event.description}
           </p>
 

@@ -44,7 +44,7 @@ export default function FilterPage({
   onPriceChange,
 }: FilterPageProps) {
   return (
-    <section className="w-full rounded-2xl border border-border bg-card/70 px-4 py-5 backdrop-blur sm:px-6 lg:px-8">
+    <section className="w-full">
       <div className="mx-auto grid w-full max-w-6xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
