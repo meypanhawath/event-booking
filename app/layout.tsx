@@ -30,18 +30,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <StoreProvider>
-            <Navbar />
             {children}
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                style: {
-                  background: "hsl(var(--background))",
-                  color: "hsl(var(--foreground))",
-                  border: "1px solid hsl(var(--border))",
-                },
-              }}
-            />
+        <Toaster position="top-right" offset={80} />
             <Footer />
           </StoreProvider>
         </ThemeProvider>

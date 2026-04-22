@@ -203,3 +203,10 @@
     transform: translateX(-50%);
   }
 }
+
+
+[data-sonner-toast] {
+  filter: none !important;
+  backdrop-filter: none !important;
+  opacity: 1 !important;
+}

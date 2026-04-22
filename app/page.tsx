@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import Navbar from "@/components/ui/navbar";
 import { TrustByCompany } from "@/components/ui/trust-by-company";
-
 import { EventCard } from "@/components/event-card";
 import { useGetEventsQuery } from "@/lib/features/events/eventsApi";
 import { Review } from "@/components/ui/review";
@@ -29,34 +28,27 @@ const categories = [
 ] as const;
 
 export default function Home() {
-  // RTK Query hook - replaces your useEffect + fetch
   const { data: eventsData, isLoading, isError, error } = useGetEventsQuery();
-
-  // Extract events from paginated response
   const events = eventsData?.content ?? [];
 
-  // Section 2: show football events only.
-  const footballEvents = events
-    .filter((event) => event.category.name.toLowerCase().includes("football"))
-    .slice(0, 4);
+  // Group events by category
+  const eventsByCategory = events.reduce((acc, event) => {
+    const categoryName = event.category.name;
+    if (!acc[categoryName]) {
+      acc[categoryName] = [];
+    }
+    acc[categoryName].push(event);
+    return acc;
+  }, {} as Record<string, typeof events>);
 
-  // Section 3: show technology events only.
-  const technologyEvents = events
-    .filter((event) => event.category.name.toLowerCase().includes("technology"))
-    .slice(0, 4);
-
-  // Loading skeleton
   if (isLoading) {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <Navbar />
         <div className="container mx-auto px-4 py-20">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-80 animate-pulse rounded-2xl bg-muted"
-              />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-80 animate-pulse rounded-2xl bg-muted" />
             ))}
           </div>
         </div>
@@ -86,7 +78,7 @@ export default function Home() {
             <section className="flex flex-1 flex-col items-center justify-center pt-16 text-center sm:pt-20">
               <div className="max-w-4xl">
                 <h1 className="text-balance text-4xl font-bold leading-none tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-                  What <span className="text-fuchsia-400">Event</span> would
+                  What <span className="text-[#C14FE6]">Event</span> would
                   <br className="hidden sm:block" /> you like to go to?
                 </h1>
                 <p className="mx-auto mt-5 max-w-2xl text-sm text-muted-foreground sm:text-base">
@@ -99,9 +91,9 @@ export default function Home() {
               <div className="mt-12 w-full max-w-5xl rounded-[22px] border border-border bg-card/90 shadow-[0_18px_50px_rgba(0,0,0,0.2)] backdrop-blur dark:shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
                 <div className="flex flex-wrap gap-2 border-b border-border p-4 sm:gap-0 sm:p-5 justify-around">
                   {categories.map(({ label, icon: Icon, accent }) => (
-                    <button
+                    <Link
                       key={label}
-                      type="button"
+                      href={`/events?category=${label.toLowerCase()}`}
                       className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-left text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground sm:justify-start"
                     >
                       <span
@@ -110,7 +102,7 @@ export default function Home() {
                         <Icon className="size-3" />
                       </span>
                       {label}
-                    </button>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -118,81 +110,38 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Events Section */}
-        <section className="container mx-auto mt-12 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">
-                Football Events
-              </h2>
+        {/* Dynamic Category Sections */}
+        {Object.entries(eventsByCategory).map(([categoryName, categoryEvents]) => (
+          <section key={categoryName} className="container mx-auto mt-12 px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">
+                  {categoryName} Events
+                </h2>
+              </div>
+              <Link
+                className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
+                href="/events"
+              >
+                See all
+              </Link>
             </div>
-            <Link
-              className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
-              href="/events"
-            >
-              See all
-            </Link>
-          </div>
 
-          {/* Error State */}
-          {isError && (
-            <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900 dark:bg-red-950">
-              <p className="text-sm text-red-600 dark:text-red-400">
-                {error && "status" in error
-                  ? `Failed to load events (Error ${error.status})`
-                  : "Failed to load events. Please try again later."}
-              </p>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {categoryEvents.slice(0, 4).map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
             </div>
-          )}
 
-          {/* Events Grid */}
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {footballEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+            {categoryEvents.length === 0 && (
+              <div className="mt-12 text-center">
+                <p className="text-muted-foreground">No {categoryName.toLowerCase()} events found.</p>
+              </div>
+            )}
+          </section>
+        ))}
 
-          {/* Empty State */}
-          {!isLoading && !isError && footballEvents.length === 0 && (
-            <div className="mt-12 text-center">
-              <p className="text-muted-foreground">No football events found.</p>
-            </div>
-          )}
-        </section>
-
-        {/* Technology Events Section */}
-        <section className="container mx-auto mt-12 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">
-                Technology Events
-              </h2>
-            </div>
-            <Link
-              className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
-              href="/events"
-            >
-              See all
-            </Link>
-          </div>
-
-          {/* Events Grid */}
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {technologyEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-
-          {/* Empty State */}
-          {!isLoading && !isError && technologyEvents.length === 0 && (
-            <div className="mt-12 text-center">
-              <p className="text-muted-foreground">
-                No technology events found.
-              </p>
-            </div>
-          )}
-        </section>
-        <section className="container mx-auto mt-12 px-4 sm:px-6 lg:px-8  w-full pt-20">
+        <section className="container mx-auto mt-12 px-4 sm:px-6 lg:px-8 w-full pt-20">
           <TrustByCompany />
         </section>
 

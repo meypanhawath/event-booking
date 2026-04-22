@@ -1,15 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import { logout } from "@/lib/features/auth/authSlice";
 import { useLogoutMutation } from "@/lib/features/auth/authApi";
 import { toast } from "sonner";
-import { User, LogOut } from "lucide-react";
-import { AvatarDropdown } from "@/components/avatars";
+import {
+  User,
+  LogOut,
+  LayoutDashboard,
+  Ticket,
+  ChevronDown,
+} from "lucide-react";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -25,19 +30,32 @@ type NavbarProps = {
 export default function Navbar({ activeItem = "Home" }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const dispatch = useAppDispatch();
 
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [logoutApi] = useLogoutMutation();
 
-  const isNavItemActive = (item: (typeof navItems)[number]) => {
-    if (item.href.startsWith("#")) return false;
-
-    if (item.href === "/") {
-      return pathname === "/";
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
     }
 
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const isNavItemActive = (item: (typeof navItems)[number]) => {
+    if (item.href.startsWith("#")) return false;
+    if (item.href === "/") return pathname === "/";
     return pathname === item.href || pathname.startsWith(`${item.href}/`);
   };
 
@@ -45,13 +63,9 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
     function handleScroll() {
       setHasScrolled(window.scrollY > 8);
     }
-
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
@@ -60,7 +74,6 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
-
     return () => {
       document.body.style.overflow = "";
     };
@@ -72,11 +85,66 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
       dispatch(logout());
       toast.success("Logged out successfully", {
         position: "top-right",
+        duration: 3000,
       });
     } catch (error) {
-      // Even if API fails, clear local state
       dispatch(logout());
+      toast.success("Logged out successfully", {
+        position: "top-right",
+        duration: 3000,
+      });
     }
+    setDropdownOpen(false);
+  };
+
+  const showLogoutConfirm = () => {
+    setDropdownOpen(false);
+    
+    toast.custom(
+  (t) => (
+    <div className="w-80 rounded-2xl border border-border bg-background shadow-xl p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#C14FE6]/10">
+              <LogOut className="size-5 text-[#C14FE6]" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Confirm Logout
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Are you sure you want to logout?
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => toast.dismiss(t)}
+              className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                toast.dismiss(t);
+                handleLogout();
+              }}
+              className="rounded-full bg-[#C14FE6] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#C14FE6]/90"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        position: "top-right",
+        duration: 3000,
+      }
+    );
+  };
+
+  const getInitials = (name: string | undefined) => {
+    if (!name) return "U";
+    return name.charAt(0).toUpperCase();
   };
 
   return (
@@ -85,7 +153,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
         className={[
           "mx-auto w-full max-w-7xl rounded-[28px] transition-colors duration-200",
           hasScrolled
-            ? "border border-border bg-background"
+            ? "border border-border bg-background shadow-lg"
             : "border border-transparent bg-transparent shadow-none",
         ].join(" ")}
       >
@@ -94,14 +162,9 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
           <button
             type="button"
             aria-expanded={isOpen}
-            aria-label={
-              isOpen ? "Close navigation menu" : "Open navigation menu"
-            }
+            aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
             onClick={() => setIsOpen((value) => !value)}
-            className={[
-              "inline-flex size-11 items-center justify-center rounded-full transition lg:hidden",
-              "text-foreground",
-            ].join(" ")}
+            className="inline-flex size-11 items-center justify-center rounded-full transition lg:hidden text-foreground"
           >
             <span className="sr-only">Menu</span>
             <svg
@@ -132,7 +195,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
           {/* Logo */}
           <Link
             href="/"
-            className="text-center text-xl font-black italic tracking-tight text-brand-main sm:text-2xl lg:shrink-0 lg:text-left lg:text-3xl"
+            className="text-center text-xl font-black italic tracking-tight text-[#C14FE6] sm:text-2xl lg:shrink-0 lg:text-left lg:text-3xl"
           >
             Event Booking
           </Link>
@@ -141,7 +204,6 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
           <nav className="hidden items-center justify-center gap-1 lg:flex">
             {navItems.map((item) => {
               const isActive = isNavItemActive(item);
-
               return (
                 <Link
                   key={item.label}
@@ -157,16 +219,16 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
                   <span
                     aria-hidden="true"
                     className={[
-                      "absolute inset-x-2 inset-y-1 -z-10 rounded-full blur-lg transition-opacity duration-200",
+                      "absolute inset-x-2 inset-y-1 -z-10 rounded-full transition-opacity duration-200",
                       isActive
-                        ? "bg-[radial-gradient(circle_at_center,rgba(193,79,230,0.38),rgba(193,79,230,0.12)_40%,transparent_76%)] opacity-100"
-                        : "bg-[radial-gradient(circle_at_center,rgba(193,79,230,0.28),rgba(193,79,230,0.08)_40%,transparent_76%)] opacity-0 group-hover:opacity-100",
+                        ? "bg-[#C14FE6]/15 opacity-100"
+                        : "bg-[#C14FE6]/10 opacity-0 group-hover:opacity-100",
                     ].join(" ")}
                   />
                   <span className="relative z-10 block">
                     {item.label}
                     {isActive ? (
-                      <span className="absolute -bottom-1 left-0 h-0.5 w-full rounded-full bg-current" />
+                      <span className="absolute -bottom-1 left-0 h-0.5 w-full rounded-full bg-[#C14FE6]" />
                     ) : null}
                   </span>
                 </Link>
@@ -179,42 +241,84 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
             <ModeToggle />
 
             {isAuthenticated ? (
-              <>
-                {/* User Avatar/Menu */}
-                <div className="hidden lg:flex items-center gap-3">
-                  <div className="flex items-center gap-2 rounded-full bg-brand-main/10 px-2 py-1">
-                    <AvatarDropdown
-                      username={user?.username}
-                      onLogout={handleLogout}
-                    />
-                    <span className="max-w-25 truncate pr-1 text-sm font-medium text-foreground">
-                      {user?.username ?? "User"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Mobile: Just show logout icon */}
+              <div className="relative" ref={dropdownRef}>
+                {/* User Profile Button */}
                 <button
-                  onClick={handleLogout}
-                  className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive lg:hidden"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className={[
+                    "flex items-center gap-2 rounded-full px-3 py-2 transition-all duration-200",
+                    dropdownOpen
+                      ? "bg-[#C14FE6]/15 border border-[#C14FE6]/30"
+                      : "bg-[#C14FE6]/10 border border-transparent hover:border-[#C14FE6]/20",
+                  ].join(" ")}
                 >
-                  <LogOut className="size-5" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#C14FE6] text-sm font-medium text-white">
+                    {getInitials(user?.username)}
+                  </div>
+                  <span className="hidden sm:inline max-w-24 truncate text-sm font-medium text-foreground">
+                    {user?.username ?? "User"}
+                  </span>
+                  <ChevronDown
+                    className={[
+                      "size-4 text-muted-foreground transition-transform duration-200",
+                      dropdownOpen ? "rotate-180" : "",
+                    ].join(" ")}
+                  />
                 </button>
-              </>
+
+                {/* Dropdown Menu */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-border bg-background shadow-xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-border bg-muted/30">
+                      <p className="text-sm font-semibold text-foreground">
+                        {user?.username}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user?.email}
+                      </p>
+                    </div>
+
+                    <div className="p-2">
+                      <Link
+                        href="/user/dashboard"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
+                      >
+                        <LayoutDashboard className="size-4 text-[#C14FE6]" />
+                        Dashboard
+                      </Link>
+
+                      <Link
+                        href="/user/dashboard/bookings"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
+                      >
+                        <Ticket className="size-4 text-[#C14FE6]" />
+                        My Bookings
+                      </Link>
+
+                      <button
+                        onClick={showLogoutConfirm}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-destructive transition hover:bg-destructive/10"
+                      >
+                        <LogOut className="size-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
-                {/* Login Button (Desktop) */}
                 <Link
                   href="/login"
-                  className="hidden rounded-full border border-brand-main bg-transparent px-5 py-2 text-sm font-medium text-brand-main transition hover:bg-brand-main hover:text-white lg:inline-flex"
+                  className="hidden rounded-full border border-[#C14FE6] bg-transparent px-5 py-2 text-sm font-medium text-[#C14FE6] transition hover:bg-[#C14FE6] hover:text-white lg:inline-flex"
                 >
                   Log in
                 </Link>
-
-                {/* Login Button (Mobile) */}
                 <Link
                   href="/login"
-                  className="inline-flex rounded-full bg-brand-main px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-main/90 lg:hidden"
+                  className="inline-flex rounded-full bg-[#C14FE6] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#C14FE6]/90 lg:hidden"
                 >
                   Login
                 </Link>
@@ -224,7 +328,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
         </div>
       </div>
 
-      {/* Tablet/Mobile Sidebar Menu */}
+      {/* Mobile Sidebar Menu */}
       <div
         className={[
           "fixed inset-0 z-50 lg:hidden transition-opacity duration-300",
@@ -237,9 +341,8 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
           type="button"
           aria-label="Close navigation menu"
           onClick={() => setIsOpen(false)}
-          className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
+          className="absolute inset-0 bg-black/45"
         />
-
         <aside
           aria-label="Mobile navigation"
           className={[
@@ -248,7 +351,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
           ].join(" ")}
         >
           <div className="mb-6 flex items-center justify-between">
-            <span className="text-lg font-extrabold italic tracking-tight text-brand-main">
+            <span className="text-lg font-extrabold italic tracking-tight text-[#C14FE6]">
               Event Booking
             </span>
             <button
@@ -276,7 +379,6 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
           <nav className="flex flex-col gap-2">
             {navItems.map((item) => {
               const isActive = isNavItemActive(item);
-
               return (
                 <Link
                   key={item.label}
@@ -293,7 +395,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
                   <span className="relative inline-block">
                     {item.label}
                     {isActive ? (
-                      <span className="absolute -bottom-1 left-0 h-0.5 w-full rounded-full bg-current" />
+                      <span className="absolute -bottom-1 left-0 h-0.5 w-full rounded-full bg-[#C14FE6]" />
                     ) : null}
                   </span>
                 </Link>
@@ -306,18 +408,32 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 rounded-full bg-[#C14FE6]/10 px-3 py-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#C14FE6] text-sm font-medium text-white">
-                    {user?.username?.charAt(0).toUpperCase() || (
-                      <User className="size-4" />
-                    )}
+                    {getInitials(user?.username)}
                   </div>
                   <span className="text-sm font-medium text-foreground max-w-42.5 truncate">
                     {user?.username}
                   </span>
                 </div>
+                <Link
+                  href="/user/dashboard"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
+                >
+                  <LayoutDashboard className="size-4 text-[#C14FE6]" />
+                  Dashboard
+                </Link>
+                <Link
+                  href="/user/dashboard/booking"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
+                >
+                  <Ticket className="size-4 text-[#C14FE6]" />
+                  My Bookings
+                </Link>
                 <button
                   onClick={() => {
-                    handleLogout();
                     setIsOpen(false);
+                    showLogoutConfirm();
                   }}
                   className="inline-flex w-full items-center justify-center rounded-full bg-destructive/10 px-5 py-3 text-sm font-medium text-destructive transition hover:bg-destructive/20"
                 >
@@ -330,14 +446,14 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
                 <Link
                   href="/login"
                   onClick={() => setIsOpen(false)}
-                  className="inline-flex w-full items-center justify-center rounded-full border border-brand-main px-5 py-3 text-sm font-medium text-brand-main transition hover:bg-brand-main hover:text-white"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-[#C14FE6] px-5 py-3 text-sm font-medium text-[#C14FE6] transition hover:bg-[#C14FE6] hover:text-white"
                 >
                   Log in
                 </Link>
                 <Link
                   href="/register"
                   onClick={() => setIsOpen(false)}
-                  className="inline-flex w-full items-center justify-center rounded-full bg-brand-main px-5 py-3 text-sm font-medium text-white transition hover:bg-brand-main/90"
+                  className="inline-flex w-full items-center justify-center rounded-full bg-[#C14FE6] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#C14FE6]/90"
                 >
                   Create account
                 </Link>
