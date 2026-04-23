@@ -74,18 +74,13 @@ export default function ApplyOrganizerPage() {
     try {
       const step1Data = step1Form.getValues();
       const payload = { ...step1Data, ...data, orgProfilePath, qrCodePath };
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
-      const response = await fetch("/api/users/apply-organizer", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  },
-  body: JSON.stringify(payload),
-});
+      const response = await fetch("/api/v1/users/apply-organizer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Application failed");
@@ -116,6 +111,30 @@ export default function ApplyOrganizerPage() {
               onClick={() => router.push("/user/dashboard")}
             >
               Go to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (user?.organizerStatus === "PENDING") {
+    return (
+      <div className="p-6 max-w-2xl mx-auto">
+        <Card>
+          <CardContent className="py-16 text-center">
+            <CheckCircle className="h-16 w-16 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-foreground">
+              Your organizer application is pending
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              An admin needs to review your application before organizer access is granted.
+            </p>
+            <Button
+              className="mt-6 bg-[#C14FE6] hover:bg-[#a855f7]"
+              onClick={() => router.push("/user/dashboard")}
+            >
+              Back to Dashboard
             </Button>
           </CardContent>
         </Card>

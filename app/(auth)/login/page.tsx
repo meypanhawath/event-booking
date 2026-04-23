@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, Mail, Lock, ArrowRight, User } from 'lucide-react'
+import { Eye, EyeOff, Lock, ArrowRight, User } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useLoginMutation } from '@/lib/features/auth/authApi'
@@ -12,6 +12,7 @@ import { useAppDispatch } from '@/lib/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { getDashboardPath } from '@/lib/auth-utils'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -41,8 +42,8 @@ export default function LoginPage() {
       }).unwrap()
 
       dispatch(setCredentials({
-        accessToken: result.access_token,
-        refreshToken: result.refresh_token,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
         user: result.user,
       }))
 
@@ -51,10 +52,11 @@ export default function LoginPage() {
         position: 'top-right',
       })
 
-      router.push('/')
+      router.replace(getDashboardPath(result.user?.roles ?? result.roles))
       router.refresh()
-    } catch (error: any) {
-      const message = error?.data?.message || 'Invalid email/username or password'
+    } catch (error: unknown) {
+      const errorWithData = error as { data?: { message?: string } }
+      const message = errorWithData?.data?.message || 'Invalid email/username or password'
       toast.error('Login failed', {
         description: message,
         position: 'top-right',
@@ -87,7 +89,7 @@ export default function LoginPage() {
               <Input
                 id="emailOrUsername"
                 type="text"
-                placeholder="name@example.com or johndoe"
+                placeholder="email or username"
                 value={formData.emailOrUsername}
                 onChange={(e) => setFormData({ ...formData, emailOrUsername: e.target.value })}
                 className="pl-10 h-12 bg-background border-border focus:border-[#C14FE6] focus:ring-[#C14FE6]/20"

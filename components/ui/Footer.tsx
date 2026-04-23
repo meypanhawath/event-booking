@@ -212,7 +212,7 @@ function EventImageRight() {
           className="text-white text-xl font-bold"
           style={{ fontFamily: "'Fraunces', serif" }}
         >
-          Don't Miss Out
+          Don&apos;t Miss Out
         </p>
         <p
           className="text-sky-400 text-xs mt-2 opacity-75"
@@ -284,7 +284,7 @@ export default function Footer() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                Event Booking
+                Eventizo
               </span>
             </div>
 
@@ -342,7 +342,7 @@ export default function Footer() {
                 fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              Copyright © Event Booking {new Date().getFullYear()}. All rights
+              Copyright © Eventizo {new Date().getFullYear()}. All rights
               reserved.
             </p>
           </div>

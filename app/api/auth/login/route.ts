@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { buildApiUrl } from '@/lib/api-url'
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,7 +10,16 @@ export async function POST(req: NextRequest) {
       password: loginData.password,
     }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API}/auth/login`, {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API
+
+    if (!apiBaseUrl) {
+      return NextResponse.json(
+        { message: 'NEXT_PUBLIC_API is not configured' },
+        { status: 500 }
+      )
+    }
+
+    const res = await fetch(buildApiUrl(apiBaseUrl, '/auth/login'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,8 +37,25 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await res.json()
+    let user = null
 
-    const response = NextResponse.json(data)
+    if (data.accessToken) {
+      const meRes = await fetch(buildApiUrl(apiBaseUrl, '/auth/me'), {
+        headers: {
+          Authorization: `Bearer ${data.accessToken}`,
+          Accept: 'application/json',
+        },
+      })
+
+      if (meRes.ok) {
+        user = await meRes.json()
+      }
+    }
+
+    const response = NextResponse.json({
+      ...data,
+      user,
+    })
     
     // Store accessToken in cookie
     response.cookies.set({

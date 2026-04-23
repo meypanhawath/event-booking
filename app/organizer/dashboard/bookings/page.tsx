@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useGetOrganizerBookingsQuery } from "@/lib/features/bookings/bookingApi";
+import { useGetEventBookingsQuery } from "@/lib/features/bookings/bookingApi";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
   Calendar,
   DollarSign,
 } from "lucide-react";
+import { useGetMyEventsQuery } from "@/lib/features/events/eventsApi";
 
 type StatusFilter = "ALL" | "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED";
 
@@ -27,11 +28,16 @@ export default function OrganizerBookingsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [page, setPage] = useState(0);
   const pageSize = 10;
-
-  const { data, isLoading, isError } = useGetOrganizerBookingsQuery({
-    page,
-    size: pageSize,
+  const { data: eventsData, isLoading: isLoadingEvents } = useGetMyEventsQuery({
+    page: 0,
+    size: 1,
   });
+  const firstEventId = eventsData?.content?.[0]?.id;
+
+  const { data, isLoading, isError } = useGetEventBookingsQuery(
+    { eventId: firstEventId ?? 0, page, size: pageSize },
+    { skip: !firstEventId }
+  );
 
   const allBookings = data?.content ?? [];
   const totalPages = data?.totalPages ?? 0;
@@ -77,7 +83,7 @@ export default function OrganizerBookingsPage() {
       </div>
 
       {/* Bookings List */}
-      {isLoading ? (
+      {isLoading || isLoadingEvents ? (
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
@@ -89,6 +95,14 @@ export default function OrganizerBookingsPage() {
             </Card>
           ))}
         </div>
+      ) : !firstEventId ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              Create an event first to start receiving bookings.
+            </p>
+          </CardContent>
+        </Card>
       ) : isError ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -124,10 +138,10 @@ export default function OrganizerBookingsPage() {
                     </div>
                     <div>
                       <p className="font-medium text-foreground">
-                        {booking.user?.firstName} {booking.user?.lastName}
+                        {booking.customer?.name}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {booking.user?.email}
+                        {booking.customer?.email}
                       </p>
                       <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">

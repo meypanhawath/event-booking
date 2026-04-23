@@ -4,6 +4,7 @@ import { useGetEventBookingsQuery } from "@/lib/features/bookings/bookingApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 import {
@@ -15,6 +16,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useGetMyEventsQuery } from "@/lib/features/events/eventsApi";
+import { Bar, BarChart, CartesianGrid, Pie, PieChart, XAxis } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
 export default function OrganizerOverviewPage() {
   const { data: eventsData, isLoading: eventsLoading } = useGetMyEventsQuery({ page: 0, size: 5 });
@@ -26,7 +29,7 @@ export default function OrganizerOverviewPage() {
     { skip: !firstEventId }
   );
 
-  const events = eventsData?.content ?? [];
+  const events = useMemo(() => eventsData?.content ?? [], [eventsData?.content]);
   const totalEvents = eventsData?.totalElements ?? 0;
 
   const now = new Date();
@@ -41,16 +44,26 @@ export default function OrganizerOverviewPage() {
 
   // Revenue from bookings (if available)
   const totalRevenue = bookingsData?.content?.reduce((sum, b) => sum + (b.totalAmount || 0), 0) ?? 0;
-  const totalBookings = bookingsData?.totalElements ?? 0;
+  const chartConfig = {
+    sold: { label: "Tickets sold", color: "#c14fe6" },
+    upcoming: { label: "Upcoming", color: "#10b981" },
+  } satisfies ChartConfig;
+  const eventPerformance = events.slice(0, 6).map((event) => ({
+    name: event.title.length > 12 ? `${event.title.slice(0, 12)}...` : event.title,
+    sold: event.tickets.reduce((sum, ticket) => sum + (ticket.soldCount || 0), 0),
+  }));
+  const mixData = [
+    { name: "Upcoming", value: upcomingEvents, fill: "#10b981" },
+    { name: "Past", value: Math.max(totalEvents - upcomingEvents, 0), fill: "#f59e0b" },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Overview</h2>
           <p className="text-muted-foreground mt-1">
-            Welcome back, here's what's happening with your events
+            Welcome back, here&apos;s what&apos;s happening with your events
           </p>
         </div>
         <Link href="/organizer/dashboard/events/create">
@@ -61,9 +74,8 @@ export default function OrganizerOverviewPage() {
         </Link>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="rounded-3xl">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Events</CardTitle>
             <Calendar className="h-4 w-4 text-[#C14FE6]" />
@@ -75,7 +87,7 @@ export default function OrganizerOverviewPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-3xl">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming</CardTitle>
             <TrendingUp className="h-4 w-4 text-emerald-500" />
@@ -87,7 +99,7 @@ export default function OrganizerOverviewPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-3xl">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Tickets Sold</CardTitle>
             <Ticket className="h-4 w-4 text-amber-500" />
@@ -99,7 +111,7 @@ export default function OrganizerOverviewPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-3xl">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-[#C14FE6]" />
@@ -112,8 +124,51 @@ export default function OrganizerOverviewPage() {
         </Card>
       </div>
 
-      {/* Recent Events */}
-      <Card>
+      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        <Card className="rounded-3xl">
+          <CardHeader>
+            <CardTitle>Event Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {eventsLoading ? (
+              <Skeleton className="h-72 w-full rounded-2xl" />
+            ) : eventPerformance.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-8 text-sm text-muted-foreground">
+                Your event analytics will appear here once you publish events.
+              </div>
+            ) : (
+              <ChartContainer config={chartConfig} className="h-72 w-full">
+                <BarChart data={eventPerformance}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="sold" radius={12} fill="var(--color-sold)" />
+                </BarChart>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-3xl">
+          <CardHeader>
+            <CardTitle>Event Mix</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {eventsLoading ? (
+              <Skeleton className="h-72 w-full rounded-2xl" />
+            ) : (
+              <ChartContainer config={chartConfig} className="h-72 w-full">
+                <PieChart>
+                  <Pie data={mixData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={92} />
+                  <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
+                </PieChart>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="rounded-3xl">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>My Events</CardTitle>
           <Link href="/organizer/dashboard/events">
@@ -148,10 +203,11 @@ export default function OrganizerOverviewPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
+                      <Image
                         src={event.thumbnailUrl}
                         alt={event.title}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     </div>
                     <div>

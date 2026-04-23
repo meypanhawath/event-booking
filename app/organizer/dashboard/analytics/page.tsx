@@ -1,7 +1,5 @@
 "use client";
 
-import { useGetMyEventsQuery } from "@/lib/features/events/eventApi";
-import { useGetOrganizerBookingsQuery } from "@/lib/features/bookings/bookingApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -22,6 +20,7 @@ import {
   DollarSign,
   Ticket,
 } from "lucide-react";
+import { useGetMyEventsQuery } from "@/lib/features/events/eventsApi";
 
 const COLORS = ["#C14FE6", "#a855f7", "#8b5cf6", "#6366f1", "#3b82f6"];
 

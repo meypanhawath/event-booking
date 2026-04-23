@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import StoreProvider from "../components/StoreProvider";
-import { Tooltip } from "@/components/ui/tooltip";
-import Navbar from "@/components/ui/navbar";
 import Footer from "@/components/ui/Footer";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "Event Booking",
+  title: "Eventizo",
   description: "Book amazing events",
 };
 
@@ -22,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className="font-[Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif]">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -137,7 +137,7 @@ export default function UserTicketsPage() {
           <Sidebar>
             <SidebarHeader>
               <div className="rounded-xl bg-brand-main/10 px-3 py-4 text-center text-2xl font-black italic tracking-tight text-brand-main">
-                Event Booking
+                Eventizo
               </div>
             </SidebarHeader>
 

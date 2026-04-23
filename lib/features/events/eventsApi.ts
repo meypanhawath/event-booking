@@ -1,35 +1,30 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { Event, PaginatedResponse } from "@/lib/types/event";
+import type { PageEventResponse, EventResponse } from "@/lib/types/event";
 
 export const eventsApi = createApi({
   reducerPath: "eventsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "/api",
-    prepareHeaders: (headers) => {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
+    baseUrl: "/api/v1",
   }),
   tagTypes: ["Event", "MyEvents"],
   endpoints: (builder) => ({
     getEvents: builder.query<
-      PaginatedResponse<Event>,
+      PageEventResponse,
       { page?: number; size?: number; sort?: string } | void
     >({
       query: (params) => ({
         url: "/events",
-        params,
+        params: params
+          ? {
+              pageNumber: params.page ?? 0,
+              pageSize: params.size ?? 20,
+            }
+          : undefined,
       }),
       providesTags: ["Event"],
     }),
 
-    getEventById: builder.query<Event, number>({
+    getEventById: builder.query<EventResponse, number>({
       query: (id) => `/events/${id}`,
       providesTags: (result, error, id) => [{ type: "Event", id }],
     }),
@@ -40,7 +35,7 @@ getMyEvents: builder.query<
 >({
   query: ({ page = 0, size = 10 }) => ({
     url: "/events/organizer/me",
-    params: { page, size },  // Simple page/size, not pageable string
+    params: { page, size },
   }),
   providesTags: ["MyEvents"],
 }),

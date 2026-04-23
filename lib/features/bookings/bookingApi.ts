@@ -4,31 +4,19 @@ import type {
   BookingResponse,
   PaginatedBookings,
   PaginatedOrganizerBookings,
-  OrganizerBookingResponse,
 } from "@/lib/types/booking";
 
 export const bookingsApi = createApi({
   reducerPath: "bookingsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "/api",  
-    prepareHeaders: (headers) => {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
-
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
+    baseUrl: "/api/v1",
   }),
   tagTypes: ["Booking", "EventBookings"],
   endpoints: (builder) => ({
     // Customer: Create booking
     createBooking: builder.mutation<BookingResponse, CreateBookingRequest>({
       query: (body) => ({
-        url: "/bookings",  // → /api/bookings → backend /api/v1/bookings
+        url: "/bookings",
         method: "POST",
         body,
       }),
@@ -41,7 +29,7 @@ export const bookingsApi = createApi({
       { page?: number; size?: number } | void
     >({
       query: (params = { page: 0, size: 10 }) => ({
-        url: "/bookings/me",  // → /api/bookings/me → backend /api/v1/bookings/me
+        url: "/bookings/me",
         params,
       }),
       providesTags: ["Booking"],
@@ -55,7 +43,7 @@ export const bookingsApi = createApi({
       query: ({ bookingId, proofPath }) => ({
         url: `/bookings/${bookingId}/payment-proof`,
         method: "PATCH",
-        body: { proofPath },
+        params: { proofPath },
       }),
       invalidatesTags: ["Booking"],
     }),
@@ -89,7 +77,7 @@ export const bookingsApi = createApi({
       query: ({ bookingId, status, remark }) => ({
         url: `/bookings/${bookingId}/verify`,
         method: "PATCH",
-        body: { status, remark },
+        params: { status, ...(remark ? { remark } : {}) },
       }),
       invalidatesTags: ["Booking", "EventBookings"],
     }),

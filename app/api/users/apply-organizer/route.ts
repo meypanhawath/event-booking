@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { buildApiUrl } from '@/lib/api-url'
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
     
     const backendUrl = process.env.NEXT_PUBLIC_API || 'http://localhost:8000'
     
-    const res = await fetch(`${backendUrl}/api/v1/users/apply-organizer`, {
+    const res = await fetch(buildApiUrl(backendUrl, '/users/apply-organizer'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

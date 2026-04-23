@@ -6,14 +6,18 @@ import { usePathname } from "next/navigation";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import { logout } from "@/lib/features/auth/authSlice";
-import { useLogoutMutation } from "@/lib/features/auth/authApi";
+import { authApi, useGetMeQuery, useLogoutMutation } from "@/lib/features/auth/authApi";
+import { getDashboardPath, getPrimaryRole, getProfileImageUrl, getUserInitial, hasRole } from "@/lib/auth-utils";
 import { toast } from "sonner";
+import Image from "next/image";
 import {
-  User,
   LogOut,
   LayoutDashboard,
   Ticket,
   ChevronDown,
+  Shield,
+  CalendarDays,
+  PlusCircle,
 } from "lucide-react";
 
 const navItems = [
@@ -36,7 +40,9 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
   const dispatch = useAppDispatch();
 
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const { data: userData } = useGetMeQuery();
   const [logoutApi] = useLogoutMutation();
+  const currentUser = userData ?? user;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -69,10 +75,6 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
   }, []);
 
   useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
@@ -87,13 +89,17 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
         position: "top-right",
         duration: 3000,
       });
-    } catch (error) {
+    } catch {
+      dispatch(authApi.util.resetApiState());
       dispatch(logout());
       toast.success("Logged out successfully", {
         position: "top-right",
         duration: 3000,
       });
+    } finally {
+      dispatch(authApi.util.resetApiState());
     }
+    window.location.href = "/";
     setDropdownOpen(false);
   };
 
@@ -101,8 +107,8 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
     setDropdownOpen(false);
     
     toast.custom(
-  (t) => (
-    <div className="w-80 rounded-2xl border border-border bg-background shadow-xl p-4">
+      (t) => (
+        <div className="w-80 rounded-2xl border border-border bg-background shadow-xl p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#C14FE6]/10">
               <LogOut className="size-5 text-[#C14FE6]" />
@@ -143,9 +149,16 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
   };
 
   const getInitials = (name: string | undefined) => {
-    if (!name) return "U";
-    return name.charAt(0).toUpperCase();
+    return getUserInitial(name);
   };
+
+  // Check roles
+  const isAdmin = hasRole(currentUser?.roles, "ROLE_ADMIN");
+  const isOrganizer = hasRole(currentUser?.roles, "ROLE_ORGANIZER");
+  const primaryRole = getPrimaryRole(currentUser?.roles);
+
+  // Get profile image URL
+  const profileImage = getProfileImageUrl(currentUser?.profile);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 w-full bg-transparent px-4 py-4 text-foreground sm:px-6 lg:px-8">
@@ -197,7 +210,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
             href="/"
             className="text-center text-xl font-black italic tracking-tight text-[#C14FE6] sm:text-2xl lg:shrink-0 lg:text-left lg:text-3xl"
           >
-            Event Booking
+            Eventizo
           </Link>
 
           {/* Desktop Navigation */}
@@ -240,7 +253,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
           <div className="flex items-center justify-end gap-2 sm:gap-3">
             <ModeToggle />
 
-            {isAuthenticated ? (
+            {currentUser || isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
                 {/* User Profile Button */}
                 <button
@@ -252,11 +265,27 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
                       : "bg-[#C14FE6]/10 border border-transparent hover:border-[#C14FE6]/20",
                   ].join(" ")}
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#C14FE6] text-sm font-medium text-white">
-                    {getInitials(user?.username)}
+                  {/* Profile Image or Initials */}
+                  <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#C14FE6] flex items-center justify-center">
+                    {profileImage ? (
+                      <Image
+                        src={profileImage}
+                        alt={currentUser?.username || "User"}
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          // Fallback to initials on image error
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <span className="text-sm font-medium text-white">
+                        {getInitials(currentUser?.username)}
+                      </span>
+                    )}
                   </div>
                   <span className="hidden sm:inline max-w-24 truncate text-sm font-medium text-foreground">
-                    {user?.username ?? "User"}
+                    {currentUser?.username ?? "User"}
                   </span>
                   <ChevronDown
                     className={[
@@ -268,19 +297,49 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
 
                 {/* Dropdown Menu */}
                 {dropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-border bg-background shadow-xl overflow-hidden">
+                  <div className="absolute right-0 top-full mt-2 w-60 rounded-2xl border border-border bg-background shadow-xl overflow-hidden">
                     <div className="px-4 py-3 border-b border-border bg-muted/30">
                       <p className="text-sm font-semibold text-foreground">
-                        {user?.username}
+                        {currentUser?.username}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {user?.email}
+                        {currentUser?.email}
                       </p>
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#C14FE6]/10 text-[#C14FE6] font-medium">
+                          {primaryRole.replace("ROLE_", "")}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="p-2">
+                    <div className="p-2 space-y-0.5">
+                      {/* Admin Panel Link */}
+                      {isAdmin && (
+                        <Link
+                          href="/admin/dashboard"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground transition hover:bg-red-50 hover:text-red-600"
+                        >
+                          <Shield className="size-4 text-red-500" />
+                          Admin Panel
+                        </Link>
+                      )}
+
+                      {/* Organizer Dashboard Link */}
+                      {isOrganizer && (
+                        <Link
+                          href="/organizer/dashboard"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
+                        >
+                          <CalendarDays className="size-4 text-[#C14FE6]" />
+                          Organizer Dashboard
+                        </Link>
+                      )}
+
+                      {/* User Dashboard */}
                       <Link
-                        href="/user/dashboard"
+                        href={getDashboardPath(currentUser?.roles)}
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
                       >
@@ -288,6 +347,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
                         Dashboard
                       </Link>
 
+                      {/* My Bookings */}
                       <Link
                         href="/user/dashboard/bookings"
                         onClick={() => setDropdownOpen(false)}
@@ -297,6 +357,21 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
                         My Bookings
                       </Link>
 
+                      {/* Apply as Organizer (only for non-organizers) */}
+                      {!isOrganizer && !isAdmin && (
+                        <Link
+                          href="/user/dashboard/apply-organizer"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
+                        >
+                          <PlusCircle className="size-4 text-[#C14FE6]" />
+                          Become Organizer
+                        </Link>
+                      )}
+
+                      <div className="border-t border-border my-1" />
+
+                      {/* Logout */}
                       <button
                         onClick={showLogoutConfirm}
                         className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-destructive transition hover:bg-destructive/10"
@@ -352,7 +427,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
         >
           <div className="mb-6 flex items-center justify-between">
             <span className="text-lg font-extrabold italic tracking-tight text-[#C14FE6]">
-              Event Booking
+              Eventizo
             </span>
             <button
               type="button"
@@ -404,32 +479,94 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
           </nav>
 
           <div className="mt-6 border-t border-border pt-4">
-            {isAuthenticated ? (
+            {currentUser || isAuthenticated ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 rounded-full bg-[#C14FE6]/10 px-3 py-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#C14FE6] text-sm font-medium text-white">
-                    {getInitials(user?.username)}
+                {/* User Info */}
+                <div className="flex items-center gap-3 px-1">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden bg-[#C14FE6] flex items-center justify-center">
+                    {profileImage ? (
+                      <Image
+                        src={profileImage}
+                        alt={currentUser?.username || "User"}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm font-medium text-white">
+                        {getInitials(currentUser?.username)}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-sm font-medium text-foreground max-w-42.5 truncate">
-                    {user?.username}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {currentUser?.username}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {currentUser?.email}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Role Badges */}
+                <div className="flex flex-wrap gap-1 px-1">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#C14FE6]/10 text-[#C14FE6] font-medium">
+                    {primaryRole.replace("ROLE_", "")}
                   </span>
                 </div>
+
+                {/* Admin Link */}
+                {isAdmin && (
+                  <Link
+                    href="/admin/dashboard"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-red-600 transition hover:bg-red-50"
+                  >
+                    <Shield className="size-4" />
+                    Admin Panel
+                  </Link>
+                )}
+
+                {/* Organizer Link */}
+                {isOrganizer && (
+                  <Link
+                    href="/organizer/dashboard"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
+                  >
+                    <CalendarDays className="size-4 text-[#C14FE6]" />
+                    Organizer Dashboard
+                  </Link>
+                )}
+
                 <Link
-                  href="/user/dashboard"
+                  href={getDashboardPath(currentUser?.roles)}
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
                 >
                   <LayoutDashboard className="size-4 text-[#C14FE6]" />
                   Dashboard
                 </Link>
+
                 <Link
-                  href="/user/dashboard/booking"
+                  href="/user/dashboard/bookings"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
                 >
                   <Ticket className="size-4 text-[#C14FE6]" />
                   My Bookings
                 </Link>
+
+                {!isOrganizer && !isAdmin && (
+                  <Link
+                    href="/user/dashboard/apply-organizer"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-foreground transition hover:bg-[#C14FE6]/10"
+                  >
+                    <PlusCircle className="size-4 text-[#C14FE6]" />
+                    Become Organizer
+                  </Link>
+                )}
+
                 <button
                   onClick={() => {
                     setIsOpen(false);

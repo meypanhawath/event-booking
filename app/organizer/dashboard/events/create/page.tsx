@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
+import { hasRole } from "@/lib/auth-utils";
 
 // Only 4 ticket types
 const TICKET_TYPES = ["SILVER", "GOLD", "PLATINUM", "DIAMOND"] as const;
@@ -73,13 +74,9 @@ type CreateEventData = z.infer<typeof createEventSchema>;
 
 export default function CreateEventPage() {
   const router = useRouter();
-  const { data: user } = useGetMeQuery(); // Debug user roles
+  const { data: user } = useGetMeQuery();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [thumbnailPath, setThumbnailPath] = useState<string>("");
-
-  // Debug: log user roles
-  console.log("Current user:", user);
-  console.log("User roles:", user?.roles);
 
   const form = useForm<CreateEventData>({
     resolver: zodResolver(createEventSchema),
@@ -113,45 +110,49 @@ export default function CreateEventPage() {
     }
 
     setIsSubmitting(true);
-    try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
 
+    try {
       const payload = {
         ...data,
         thumbnailPath,
       };
 
-      console.log("Submitting payload:", payload); // Debug
-
-      // Try /api/v1/events instead of /api/events
       const response = await fetch("/api/v1/events", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
-      console.log("Response status:", response.status); // Debug
-
       if (!response.ok) {
-        const error = await response.json();
-        console.error("Error response:", error); // Debug
-        throw new Error(error.message || `Failed to create event (${response.status})`);
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.message || `HTTP ${response.status}: Failed to create event`);
       }
 
       toast.success("Event created successfully!");
       router.push("/organizer/dashboard/events");
+      router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to create event");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (user && !hasRole(user.roles, "ROLE_ORGANIZER") && !hasRole(user.roles, "ROLE_ADMIN")) {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-6 text-center">
+        <CheckCircle className="mx-auto mb-4 h-10 w-10 text-amber-500" />
+        <h2 className="text-xl font-semibold text-foreground">Organizer access required</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Your account does not currently have organizer permission to create events.
+        </p>
+      </div>
+    );
+  }
+
+  
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

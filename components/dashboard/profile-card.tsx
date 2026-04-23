@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Phone, Shield } from "lucide-react";
+import { Mail, Phone, Shield } from "lucide-react";
 import type { UserResponse } from "@/lib/types/user";
+import Link from "next/link";
+import { getPrimaryRole, getProfileImageUrl, getUserInitial, hasRole } from "@/lib/auth-utils";
 
 interface ProfileCardProps {
   user: UserResponse | null;
@@ -14,8 +16,10 @@ interface ProfileCardProps {
 export function ProfileCard({ user }: ProfileCardProps) {
   if (!user) return null;
 
-  const isOrganizer = user.roles?.includes("ROLE_ORGANIZER");
-  const isAdmin = user.roles?.includes("ROLE_ADMIN");
+  const isAdmin = hasRole(user.roles, "ROLE_ADMIN");
+  const profileImage = getProfileImageUrl(user.profile);
+  const primaryRole = getPrimaryRole(user.roles);
+  const userInitial = getUserInitial(user.username, user.firstName);
 
   return (
     <Card className="overflow-hidden">
@@ -24,17 +28,17 @@ export function ProfileCard({ user }: ProfileCardProps) {
         <div className="flex flex-col items-center">
           {/* Avatar */}
           <div className="relative">
-            {user.profile ? (
+            {profileImage ? (
               <Image
-                src={user.profile}
+                src={profileImage}
                 alt={user.username}
                 width={96}
                 height={96}
                 className="rounded-full border-4 border-background object-cover w-24 h-24"
               />
             ) : (
-              <div className="w-24 h-24 rounded-full border-4 border-background bg-[#C14FE6]/10 flex items-center justify-center">
-                <User className="w-10 h-10 text-[#C14FE6]" />
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-background bg-[#C14FE6] text-3xl font-semibold text-white">
+                {userInitial}
               </div>
             )}
           </div>
@@ -47,19 +51,27 @@ export function ProfileCard({ user }: ProfileCardProps) {
 
           {/* Role Badges */}
           <div className="mt-3 flex flex-wrap gap-2 justify-center">
-            {isAdmin && (
+            {primaryRole === "ROLE_ADMIN" && (
               <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
                 <Shield className="w-3 h-3 mr-1" />
                 Admin
               </Badge>
             )}
-            {isOrganizer && (
+            {primaryRole === "ROLE_ORGANIZER" && (
               <Badge className="bg-[#C14FE6]/10 text-[#C14FE6] hover:bg-[#C14FE6]/10">
                 Organizer
               </Badge>
             )}
-            <Badge variant="secondary">Customer</Badge>
+            {primaryRole === "ROLE_CUSTOMER" && (
+              <Badge variant="secondary">Customer</Badge>
+            )}
           </div>
+
+          {!isAdmin && (
+            <Button asChild className="mt-4 bg-[#C14FE6] hover:bg-[#a855f7]">
+              <Link href="/user/dashboard/profile">Edit Profile</Link>
+            </Button>
+          )}
 
           {/* Info */}
           <div className="mt-4 w-full space-y-3">

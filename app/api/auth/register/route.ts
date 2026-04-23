@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
+import { buildApiUrl } from "@/lib/api-url"
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API}/auth/register`, {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API
+
+    if (!apiBaseUrl) {
+      return NextResponse.json(
+        { message: "NEXT_PUBLIC_API is not configured" },
+        { status: 500 }
+      )
+    }
+
+    const res = await fetch(buildApiUrl(apiBaseUrl, "/auth/register"), {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",

@@ -1,42 +1,46 @@
-export interface Event {
+export interface Ticket {
+  id?: number;
+  type: "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND";
+  price: number;
+  quantity: number;
+  soldCount?: number;
+  available?: number;
+  description: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+}
+
+export interface Organizer {
+  uuid: string;
+  username: string;
+  orgName: string;
+  socialUrl: string | null;
+  orgBio: string | null;
+}
+
+export interface EventResponse {
   id: number;
   title: string;
   description: string;
   thumbnailPath: string;
   thumbnailUrl: string;
   rating: number;
-  status: "UPCOMING" | "ONGOING" | "COMPLETED" | "CANCELLED";
+  status: "UPCOMING" | "COMPLETED" | "CANCELLED" | "SOLD_OUT";
   startDate: string;
   endDate: string;
   location: string;
   isAvailable: boolean;
   isDeleted: boolean;
-  category: {
-    id: number;
-    name: string;
-  };
-  organizer: {
-    uuid: string;
-    username: string;
-    orgName: string;
-    socialUrl: string | null;
-    orgBio: string | null;
-  };
+  category: Category;
+  organizer: Organizer;
   tickets: Ticket[];
 }
 
-export interface Ticket {
-  id: number;
-  type: string;
-  price: number;
-  quantity: number;
-  soldCount: number;
-  available: number;
-  description: string;
-}
-
-export interface PaginatedResponse<T> {
-  content: T[];
+export interface PageEventResponse {
+  content: EventResponse[];
   empty: boolean;
   first: boolean;
   last: boolean;
@@ -62,4 +66,22 @@ export interface PaginatedResponse<T> {
   };
   totalElements: number;
   totalPages: number;
+}
+
+export interface CreateTicketRequest {
+  type: "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND";
+  price: number;
+  quantity: number;
+  description: string;
+}
+
+export interface CreateEventRequest {
+  title: string;
+  description: string;
+  thumbnailPath: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  categoryId: number;
+  tickets: CreateTicketRequest[];
 }

@@ -63,7 +63,7 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
             href="/"
             className="text-center text-xl font-black italic tracking-tight text-fuchsia-400 sm:text-2xl lg:shrink-0 lg:text-left lg:text-3xl"
           >
-            Event Booking
+            Eventizo
           </Link>
 
           <nav className="hidden items-center justify-center gap-1 lg:flex">

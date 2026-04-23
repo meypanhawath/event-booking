@@ -14,7 +14,7 @@ export const authApi = createApi({
         method: 'POST',
         body: credentials,
       }),
-      invalidatesTags: ['Auth'],
+      invalidatesTags: ['Auth', 'User'],
     }),
     
     register: builder.mutation<AuthResponse, RegisterRequest>({
