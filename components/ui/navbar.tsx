@@ -23,8 +23,8 @@ import {
 const navItems = [
   { label: "Home", href: "/" },
   { label: "Events", href: "/events" },
-  { label: "About Us", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "About Us", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ] as const;
 
 type NavbarProps = {

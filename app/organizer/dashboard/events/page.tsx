@@ -43,10 +43,6 @@ export default function MyEventsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">My Events</h2>
-          <p className="text-muted-foreground mt-1">
-            Manage all your created events
-          </p>
         </div>
         <Link href="/organizer/dashboard/events/create">
           <Button className="bg-[#C14FE6] hover:bg-[#a855f7]">

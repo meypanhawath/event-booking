@@ -158,14 +158,7 @@ export default function CreateEventPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/organizer/dashboard/events">
-          <Button variant="ghost" size="icon">
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-        </Link>
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Create Event</h2>
-          <p className="text-muted-foreground">Create a new event with multiple ticket tiers</p>
         </div>
       </div>
 

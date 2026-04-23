@@ -61,10 +61,6 @@ export default function OrganizerOverviewPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Overview</h2>
-          <p className="text-muted-foreground mt-1">
-            Welcome back, here&apos;s what&apos;s happening with your events
-          </p>
         </div>
         <Link href="/organizer/dashboard/events/create">
           <Button className="bg-[#C14FE6] hover:bg-[#a855f7]">
