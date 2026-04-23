@@ -44,7 +44,6 @@ export default function Home() {
   if (isLoading) {
     return (
       <main className="min-h-screen bg-background text-foreground">
-        <Navbar />
         <div className="container mx-auto px-4 py-20">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
