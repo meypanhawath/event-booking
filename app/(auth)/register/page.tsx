@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Phone } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { useRegisterMutation } from '@/lib/features/auth/authApi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SocialAuthButtons } from '@/components/auth/social-auth-buttons'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
+    phoneNumber: '',
     password: '',
     confirmPassword: '',
   })
@@ -28,7 +30,7 @@ export default function RegisterPage() {
     e.preventDefault()
     
     // Validation
-    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.username || !formData.email || !formData.phoneNumber || !formData.password || !formData.confirmPassword) {
       toast.error('Please fill in all fields', {
         position: 'top-right',
       })
@@ -54,6 +56,7 @@ export default function RegisterPage() {
       await register({
         username: formData.username,
         email: formData.email,
+        phoneNumber: formData.phoneNumber,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
       }).unwrap()
@@ -68,9 +71,10 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push('/login')
       }, 1500)
-    } catch (error: any) {
-      const message = error?.data?.message || 'Registration failed. Please try again.'
-      const errors = error?.data?.errors
+    } catch (error: unknown) {
+      const apiError = error as { data?: { message?: string; errors?: Record<string, string[]> } }
+      const message = apiError?.data?.message || 'Registration failed. Please try again.'
+      const errors = apiError?.data?.errors
       
       if (errors) {
         Object.entries(errors).forEach(([field, messages]) => {
@@ -102,6 +106,16 @@ export default function RegisterPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-3">
+            <SocialAuthButtons />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Or register with email</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
           {/* Username */}
           <div className="space-y-2">
             <Label htmlFor="username" className="text-foreground">
@@ -134,6 +148,25 @@ export default function RegisterPage() {
                 placeholder="name@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="pl-10 h-12 bg-background border-border focus:border-[#C14FE6] focus:ring-[#C14FE6]/20"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Phone Number */}
+          <div className="space-y-2">
+            <Label htmlFor="phoneNumber" className="text-foreground">
+              Phone Number <span className="text-red-500">*</span>
+            </Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                id="phoneNumber"
+                type="tel"
+                placeholder="012345678"
+                value={formData.phoneNumber}
+                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                 className="pl-10 h-12 bg-background border-border focus:border-[#C14FE6] focus:ring-[#C14FE6]/20"
                 required
               />

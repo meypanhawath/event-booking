@@ -1,9 +1,10 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { Ticket } from "@/lib/types/event";
 
-type SectionId = "vip" | "a" | "b" | "c" | "stage";
+type SectionId = "diamond" | "platinum" | "gold" | "silver" | "stage";
 type SelectedSection = SectionId | null;
 
 const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -47,51 +48,55 @@ const RING_D1 = -30;
 const RING_D2 = 210;
 
 const RINGS = [
-  { id: "c" as const, r1: 178, r2: 215, label: "C" },
-  { id: "b" as const, r1: 140, r2: 178, label: "B" },
-  { id: "a" as const, r1: 100, r2: 140, label: "A" },
+  { id: "silver" as const, r1: 178, r2: 215, label: "Silver" },
+  { id: "gold" as const, r1: 140, r2: 178, label: "Gold" },
+  { id: "platinum" as const, r1: 100, r2: 140, label: "Platinum" },
 ];
 
 const FILLS: Record<SectionId, string> = {
-  vip: "#252525",
-  a: "#141414",
-  b: "#161616",
-  c: "#1b1b1b",
-  stage: "#b8b8b8",
+  diamond: "#52525b",
+  platinum: "#71717a",
+  gold: "#52525b",
+  silver: "#3f3f46",
+  stage: "#d4d4d8",
 };
 
 const HOVERED: Record<SectionId, string> = {
-  vip: "#302840",
-  a: "#272032",
-  b: "#232030",
-  c: "#1f1f2e",
-  stage: "#cccccc",
+  diamond: "#6d28d9",
+  platinum: "#7c3aed",
+  gold: "#6d28d9",
+  silver: "#5b21b6",
+  stage: "#e4e4e7",
 };
 
 const SELECTED: Record<SectionId, string> = {
-  vip: "#4c1d95",
-  a: "#3b1a7a",
-  b: "#341870",
-  c: "#2d1466",
+  diamond: "#4c1d95",
+  platinum: "#3b1a7a",
+  gold: "#341870",
+  silver: "#2d1466",
   stage: "#7c3aed",
 };
 
-const SECTION_INFO: Record<
-  SectionId,
-  { label: string; price: string; desc: string }
-> = {
-  vip: {
-    label: "VIP+",
+type SectionMeta = {
+  label: string;
+  price: string;
+  desc: string;
+  ticketId?: number;
+};
+
+const SECTION_INFO: Record<SectionId, SectionMeta> = {
+  diamond: {
+    label: "Diamond",
     price: "$400",
     desc: "Front-of-stage circle · limited to 40 tickets",
   },
-  a: { label: "Ring A", price: "$325", desc: "92 tickets · seated together" },
-  b: {
-    label: "Ring B",
+  platinum: { label: "Platinum", price: "$325", desc: "92 tickets · seated together" },
+  gold: {
+    label: "Gold",
     price: "$300",
     desc: "156 tickets · best mid-range view",
   },
-  c: { label: "Ring C", price: "$200", desc: "248 tickets · great atmosphere" },
+  silver: { label: "Silver", price: "$200", desc: "248 tickets · great atmosphere" },
   stage: {
     label: "Stage",
     price: "-",
@@ -99,7 +104,51 @@ const SECTION_INFO: Record<
   },
 };
 
-const SEP_COLOR = "#050505";
+const ZONE_ORDER: SectionId[] = ["diamond", "platinum", "gold", "silver"];
+
+const getSectionIdFromType = (type: string): SectionId | null => {
+  const normalizedType = type.trim().toLowerCase();
+
+  if (normalizedType.includes("diamond")) return "diamond";
+  if (normalizedType.includes("platinum")) return "platinum";
+  if (normalizedType.includes("gold") || normalizedType.includes("premium")) return "gold";
+  if (normalizedType.includes("silver") || normalizedType.includes("standard")) return "silver";
+
+  return null;
+};
+
+const buildSectionInfoFromTickets = (
+  tickets: Ticket[],
+): Record<SectionId, SectionMeta> => {
+  const sectionInfo = { ...SECTION_INFO };
+  const usedSections = new Set<SectionId>();
+  const sortedTickets = [...tickets].sort((a, b) => b.price - a.price);
+
+  sortedTickets.forEach((ticket) => {
+    const mappedByType = getSectionIdFromType(ticket.type);
+
+    const targetSection =
+      mappedByType && !usedSections.has(mappedByType)
+        ? mappedByType
+        : ZONE_ORDER.find((sectionId) => !usedSections.has(sectionId));
+
+    if (!targetSection) {
+      return;
+    }
+
+    usedSections.add(targetSection);
+    sectionInfo[targetSection] = {
+      label: ticket.type,
+      price: `$${ticket.price}`,
+      desc: `${ticket.available} tickets · seated together`,
+      ticketId: ticket.id,
+    };
+  });
+
+  return sectionInfo;
+};
+
+const SEP_COLOR = "#18181b";
 
 type SectionProps = {
   id: SectionId;
@@ -156,48 +205,98 @@ function Section({
   return <path d={d} {...sharedProps} />;
 }
 
-function InfoBar({ selected }: { selected: SelectedSection }) {
+function InfoBar({
+  selected,
+  sectionInfo,
+}: {
+  selected: SelectedSection;
+  sectionInfo: Record<SectionId, SectionMeta>;
+}) {
   if (!selected) {
+    return <p className="min-h-6" aria-hidden="true" />;
+  }
+
+  const { label, price, desc } = sectionInfo[selected];
+
+  if (selected === "stage") {
     return (
-      <p className="min-h-6 text-center text-sm text-gray-500">
-        Click a section to see details
-      </p>
+      <div className="min-h-6 text-center text-sm">
+        <p className="font-semibold text-foreground">{label}</p>
+        <p className="text-muted-foreground">{desc}</p>
+      </div>
     );
   }
 
-  const { label, price, desc } = SECTION_INFO[selected];
-
   return (
     <p className="min-h-6 text-center text-sm">
-      <span className="font-semibold text-white">{label}</span>
-      <span className="mx-2 font-semibold text-purple-400">{price}</span>
-      <span className="text-gray-400">{desc}</span>
+      <span className="font-semibold text-foreground">{label}</span>
+      <span className="mx-2 font-semibold text-brand-main">{price}</span>
+      <span className="text-muted-foreground">{desc}</span>
     </p>
   );
 }
 
-function BuyButton({ selected }: { selected: SelectedSection }) {
+function BuyButton({
+  selected,
+  sectionInfo,
+}: {
+  selected: SelectedSection;
+  sectionInfo: Record<SectionId, SectionMeta>;
+}) {
   if (!selected || selected === "stage") {
     return null;
   }
 
-  const { label, price } = SECTION_INFO[selected];
+  const { label, price } = sectionInfo[selected];
 
   return (
-    <button className="mt-4 rounded-2xl bg-linear-to-r from-purple-700 to-violet-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-purple-900/40 transition-all duration-200 hover:from-purple-600 hover:to-violet-500">
+    <button
+      type="button"
+      className="mt-4 rounded-2xl bg-brand-main px-8 py-3 text-sm font-bold text-white shadow-lg shadow-brand-main/30 transition-all duration-200 hover:bg-brand-main/90"
+    >
       Buy {label} Tickets · {price} / person
     </button>
   );
 }
 
-export default function VenueMap({ eventTitle }: { eventTitle: string }) {
+export default function VenueMap({
+  eventTitle,
+  tickets = [],
+  onBuyTicket,
+}: {
+  eventTitle: string;
+  tickets?: Ticket[];
+  onBuyTicket?: (ticket: Ticket) => void;
+}) {
   const [hovered, setHovered] = useState<SelectedSection>(null);
   const [selected, setSelected] = useState<SelectedSection>(null);
+
+  const sectionInfo = useMemo(
+    () => buildSectionInfoFromTickets(tickets),
+    [tickets],
+  );
+
+  const compactLabel = useCallback(
+    (id: Exclude<SectionId, "stage">) => {
+      const baseLabel = sectionInfo[id].label.replace(/^Section\s+/i, "");
+      return baseLabel.length > 10 ? baseLabel.slice(0, 10) : baseLabel;
+    },
+    [sectionInfo],
+  );
+
+  const selectedTicket = useMemo(() => {
+    if (!selected || selected === "stage") {
+      return null;
+    }
+
+    const ticketId = sectionInfo[selected].ticketId;
+    return tickets.find((ticket) => ticket.id === ticketId) ?? null;
+  }, [sectionInfo, selected, tickets]);
 
   const ringLabels = RINGS.map(({ id, r1, r2, label }) => {
     const midR = (r1 + r2) / 2;
     const [lx, ly] = polarXY(CX, CY, midR, 90);
-    return { id, lx, ly, label };
+    return { id, lx, ly, label: compactLabel(id), fallbackLabel: label };
   });
 
   const [stx, sty] = polarXY(CX, CY, 158, -90);
@@ -207,15 +306,15 @@ export default function VenueMap({ eventTitle }: { eventTitle: string }) {
   }, []);
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-[#0e1017] p-4 sm:p-5">
+    <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="mb-8 text-center">
-        <h2 className="text-2xl font-black tracking-tight text-white">
+        <h2 className="text-2xl font-black tracking-tight text-foreground">
           Select Your Section
         </h2>
-        <p className="mt-1 text-sm text-gray-500">{eventTitle}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{eventTitle}</p>
       </div>
 
-      <div className="w-full max-w-120">
+      <div className="mx-auto w-full max-w-120">
         <svg
           viewBox="0 0 500 520"
           width="100%"
@@ -223,8 +322,20 @@ export default function VenueMap({ eventTitle }: { eventTitle: string }) {
           role="img"
           aria-label="Interactive venue seating map"
         >
-          <circle cx={CX} cy={CY} r={228} fill="#090909" />
-          <circle cx={CX} cy={CY} r={220} fill="#0f0f0f" />
+          <circle
+            cx={CX}
+            cy={CY}
+            r={228}
+            fill="#f4f4f5"
+            className="dark:fill-[#090909]"
+          />
+          <circle
+            cx={CX}
+            cy={CY}
+            r={220}
+            fill="#e4e4e7"
+            className="dark:fill-[#0f0f0f]"
+          />
 
           {[214, 208, 200].map((r) => (
             <circle
@@ -233,7 +344,8 @@ export default function VenueMap({ eventTitle }: { eventTitle: string }) {
               cy={CY}
               r={r}
               fill="none"
-              stroke="#0a0a0a"
+              stroke="#a1a1aa"
+              className="dark:stroke-[#0a0a0a]"
               strokeWidth={1.5}
             />
           ))}
@@ -266,7 +378,8 @@ export default function VenueMap({ eventTitle }: { eventTitle: string }) {
             dominantBaseline="middle"
             fontSize={13}
             fontWeight={600}
-            fill="#2a2a2a"
+            fill="currentColor"
+            className="text-zinc-950 dark:text-zinc-900"
             style={{
               pointerEvents: "none",
               fontFamily: "system-ui, sans-serif",
@@ -276,7 +389,7 @@ export default function VenueMap({ eventTitle }: { eventTitle: string }) {
           </text>
 
           <Section
-            id="vip"
+            id="diamond"
             isCircle
             cx={CX}
             cy={CY}
@@ -294,7 +407,8 @@ export default function VenueMap({ eventTitle }: { eventTitle: string }) {
               cy={CY}
               r={r}
               fill="none"
-              stroke="#1c1c1c"
+              stroke="#a1a1aa"
+              className="dark:stroke-[#1c1c1c] font-bold"
               strokeWidth={1}
             />
           ))}
@@ -306,16 +420,17 @@ export default function VenueMap({ eventTitle }: { eventTitle: string }) {
             dominantBaseline="middle"
             fontSize={17}
             fontWeight={500}
-            fill="#c0c0c0"
+            fill="currentColor"
+            className="text-zinc-200 dark:text-zinc-200 font-bold"
             style={{
               pointerEvents: "none",
               fontFamily: "system-ui, sans-serif",
             }}
           >
-            VIP+
+            DIAMOND
           </text>
 
-          {ringLabels.map(({ id, lx, ly, label }) => (
+          {ringLabels.map(({ id, lx, ly, label, fallbackLabel }) => (
             <text
               key={id}
               x={f(lx)}
@@ -324,32 +439,51 @@ export default function VenueMap({ eventTitle }: { eventTitle: string }) {
               dominantBaseline="middle"
               fontSize={13}
               fontWeight={500}
-              fill={selected === id ? "#a78bfa" : "#555555"}
+              fill="currentColor"
+              className={
+                selected === id
+                  ? "text-zinc-200 dark:text-zinc-100 font-bold"
+                  : "text-zinc-300 dark:text-zinc-300 font-bold1"
+              }
               style={{
                 pointerEvents: "none",
                 fontFamily: "system-ui, sans-serif",
                 transition: "fill 0.15s",
               }}
             >
-              {label}
+              {label || fallbackLabel}
             </text>
           ))}
         </svg>
       </div>
 
-      <div className="mt-4 w-full max-w-120">
-        <InfoBar selected={selected} />
+      <div className="mx-auto mt-4 w-full max-w-120">
+        <InfoBar selected={selected} sectionInfo={sectionInfo} />
         <div className="flex justify-center">
-          <BuyButton selected={selected} />
-        </div>
+        {selected && selected !== "stage" && selectedTicket ? (
+          <button
+            type="button"
+            onClick={() => onBuyTicket?.(selectedTicket)}
+            className="mt-4 rounded-2xl bg-brand-main px-8 py-3 text-sm font-bold text-white shadow-lg shadow-brand-main/30 transition-all duration-200 hover:bg-brand-main/90"
+          >
+            Buy {selectedTicket.type} Tickets · ${selectedTicket.price} / person
+          </button>
+        ) : (
+          <BuyButton selected={selected} sectionInfo={sectionInfo} />
+        )}
+      </div>
       </div>
 
-      <div className="mt-8 flex items-center justify-center gap-5">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-5">
         {[
-          { id: "vip" as const, label: "VIP+", color: "#4c1d95" },
-          { id: "a" as const, label: "Ring A", color: "#3b1a7a" },
-          { id: "b" as const, label: "Ring B", color: "#341870" },
-          { id: "c" as const, label: "Ring C", color: "#2d1466" },
+          {
+            id: "diamond" as const,
+            label: sectionInfo.diamond.label,
+            color: "#4c1d95",
+          },
+          { id: "platinum" as const, label: sectionInfo.platinum.label, color: "#3b1a7a" },
+          { id: "gold" as const, label: sectionInfo.gold.label, color: "#341870" },
+          { id: "silver" as const, label: sectionInfo.silver.label, color: "#2d1466" },
           { id: "stage" as const, label: "Stage", color: "#b8b8b8" },
         ].map(({ id, label, color }) => (
           <button
@@ -364,8 +498,8 @@ export default function VenueMap({ eventTitle }: { eventTitle: string }) {
             <span
               className={`text-xs transition-colors ${
                 selected === id
-                  ? "text-purple-300"
-                  : "text-gray-500 group-hover:text-gray-300"
+                  ? "text-brand-main"
+                  : "text-muted-foreground group-hover:text-foreground"
               }`}
             >
               {label}

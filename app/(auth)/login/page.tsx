@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getDashboardPath } from '@/lib/auth-utils'
+import { SocialAuthButtons } from '@/components/auth/social-auth-buttons'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -79,6 +80,16 @@ export default function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-3">
+            <SocialAuthButtons />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Or continue with password</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
           {/* Email or Username */}
           <div className="space-y-2">
             <Label htmlFor="emailOrUsername" className="text-foreground">
@@ -160,7 +171,7 @@ export default function LoginPage() {
         {/* Register Link */}
         <div className="mt-8 text-center">
           <p className="text-muted-foreground text-sm">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link
               href="/register"
               className="text-[#C14FE6] hover:text-[#C14FE6]/80 font-medium transition"

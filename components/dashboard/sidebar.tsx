@@ -2,16 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   User,
   Ticket,
   Store,
   LogOut,
   ChevronRight,
-  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAppSelector } from "@/lib/hooks";
 
 interface SidebarProps {
   user: {
@@ -57,10 +56,20 @@ export function DashboardSidebar({ user }: SidebarProps) {
       {/* Logo / Brand */}
       <div className="p-6 border-b border-border">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#C14FE6] flex items-center justify-center">
-            <Home className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-lg text-foreground">EventHub</span>
+          <Image
+            src="/logo-1.png"
+            alt="Eventizo logo"
+            width={160}
+            height={48}
+            className="block h-10 w-auto dark:hidden"
+          />
+          <Image
+            src="/logo-2.png"
+            alt="Eventizo logo"
+            width={160}
+            height={48}
+            className="hidden h-10 w-auto dark:block"
+          />
         </Link>
       </div>
 

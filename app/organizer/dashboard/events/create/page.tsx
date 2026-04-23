@@ -22,7 +22,6 @@ import { FileUpload } from "@/components/dashboard/file-upload";
 import {
   Calendar,
   Tag,
-  ChevronLeft,
   PlusCircle,
   CheckCircle,
   Trash2,
@@ -68,6 +67,21 @@ const createEventSchema = z.object({
   endDate: z.string().min(1, "End date is required"),
   categoryId: z.number().min(1, "Category is required"),
   tickets: z.array(ticketSchema).min(1, "At least one ticket is required"),
+}).superRefine((data, ctx) => {
+  const seen = new Set<string>();
+
+  data.tickets.forEach((ticket, index) => {
+    if (seen.has(ticket.type)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["tickets", index, "type"],
+        message: `Ticket type ${ticket.type} is already selected`,
+      });
+      return;
+    }
+
+    seen.add(ticket.type);
+  });
 });
 
 type CreateEventData = z.infer<typeof createEventSchema>;
@@ -83,10 +97,10 @@ export default function CreateEventPage() {
     defaultValues: {
       title: "",
       description: "",
-      location: "Phnom Penh",
+      location: "",
       startDate: "",
       endDate: "",
-      categoryId: 1,
+      categoryId: 0,
       tickets: [
         {
           type: "SILVER",
@@ -102,6 +116,17 @@ export default function CreateEventPage() {
     control: form.control,
     name: "tickets",
   });
+  const watchedTickets = form.watch("tickets");
+
+  const getAvailableTypes = (currentIndex: number) => {
+    const selectedByOthers = watchedTickets
+      .map((ticket, index) => (index === currentIndex ? null : ticket?.type))
+      .filter((type): type is (typeof TICKET_TYPES)[number] => type !== null && type !== undefined);
+
+    return TICKET_TYPES.filter(
+      (type) => type === watchedTickets[currentIndex]?.type || !selectedByOthers.includes(type)
+    );
+  };
 
   const handleSubmit = async (data: CreateEventData) => {
     if (!thumbnailPath) {
@@ -205,7 +230,7 @@ export default function CreateEventPage() {
             <div className="space-y-2">
               <Label htmlFor="categoryId">Category <span className="text-red-500">*</span></Label>
               <Select
-                defaultValue="1"
+                defaultValue="0"
                 onValueChange={(value) => form.setValue("categoryId", Number(value))}
               >
                 <SelectTrigger>
@@ -224,7 +249,7 @@ export default function CreateEventPage() {
             <div className="space-y-2">
               <Label htmlFor="location">Location <span className="text-red-500">*</span></Label>
               <Select
-                defaultValue="Phnom Penh"
+                defaultValue=""
                 onValueChange={(value) => form.setValue("location", value)}
               >
                 <SelectTrigger>
@@ -276,10 +301,16 @@ export default function CreateEventPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const usedTypes = fields.map((f) => f.type);
-                  const availableType = TICKET_TYPES.find((t) => !usedTypes.includes(t as any)) || "SILVER";
+                  const usedTypes = watchedTickets.map((ticket) => ticket?.type);
+                  const availableType = TICKET_TYPES.find((type) => !usedTypes.includes(type));
+
+                  if (!availableType) {
+                    toast.error("All ticket types are already used");
+                    return;
+                  }
+
                   append({
-                    type: availableType as any,
+                    type: availableType,
                     price: 0,
                     quantity: 100,
                     description: "",
@@ -320,21 +351,43 @@ export default function CreateEventPage() {
                     <Label>Type <span className="text-red-500">*</span></Label>
                     <Select
                       defaultValue={field.type}
-                      onValueChange={(value) =>
-                        form.setValue(`tickets.${index}.type`, value as any)
-                      }
+                      onValueChange={(value) => {
+                        const duplicateExists = watchedTickets.some(
+                          (ticket, ticketIndex) => ticketIndex !== index && ticket?.type === value
+                        );
+
+                        if (duplicateExists) {
+                          form.setError(`tickets.${index}.type`, {
+                            type: "manual",
+                            message: `Ticket type ${value} is already selected`,
+                          });
+                          toast.error(`Ticket type ${value} is already selected`);
+                          return;
+                        }
+
+                        form.clearErrors(`tickets.${index}.type`);
+                        form.setValue(`tickets.${index}.type`, value as (typeof TICKET_TYPES)[number], {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {TICKET_TYPES.map((type) => (
+                        {getAvailableTypes(index).map((type) => (
                           <SelectItem key={type} value={type}>
                             {type}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    {form.formState.errors.tickets?.[index]?.type && (
+                      <p className="text-sm text-red-600">
+                        {form.formState.errors.tickets[index]?.type?.message}
+                      </p>
+                    )}
                   </div>
 
                   {/* Price */}

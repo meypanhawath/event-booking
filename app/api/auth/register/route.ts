@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         username: body.username,
         email: body.email,
+        phoneNumber: body.phoneNumber,
         password: body.password,
         confirmPassword: body.confirmPassword,
       })

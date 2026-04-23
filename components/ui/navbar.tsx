@@ -10,6 +10,7 @@ import { authApi, useGetMeQuery, useLogoutMutation } from "@/lib/features/auth/a
 import { getDashboardPath, getPrimaryRole, getProfileImageUrl, getUserInitial, hasRole } from "@/lib/auth-utils";
 import { toast } from "sonner";
 import Image from "next/image";
+import { SiteLogo } from "@/components/ui/site-logo";
 import {
   LogOut,
   LayoutDashboard,
@@ -27,11 +28,7 @@ const navItems = [
   { label: "Contact", href: "/contact" },
 ] as const;
 
-type NavbarProps = {
-  activeItem?: (typeof navItems)[number]["label"];
-};
-
-export default function Navbar({ activeItem = "Home" }: NavbarProps) {
+export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -206,12 +203,13 @@ export default function Navbar({ activeItem = "Home" }: NavbarProps) {
           </button>
 
           {/* Logo */}
-          <Link
-            href="/"
-            className="text-center text-xl font-black italic tracking-tight text-[#C14FE6] sm:text-2xl lg:shrink-0 lg:text-left lg:text-3xl"
-          >
-            Eventizo
-          </Link>
+          <SiteLogo
+            className="lg:shrink-0"
+            imageClassName="h-10 w-auto sm:h-11 lg:h-12"
+            width={200}
+            height={60}
+            priority
+          />
 
           {/* Desktop Navigation */}
           <nav className="hidden items-center justify-center gap-1 lg:flex">

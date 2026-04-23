@@ -33,6 +33,7 @@ import { authApi, useLogoutMutation } from "@/lib/features/auth/authApi";
 import { useAppDispatch } from "@/lib/hooks";
 import { getProfileImageUrl, getUserInitial } from "@/lib/auth-utils";
 import { SignOutDialog } from "@/components/dashboard/sign-out-dialog";
+import { SiteLogo } from "@/components/ui/site-logo";
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { ChevronRight, LogOut } from "lucide-react";
@@ -106,15 +107,18 @@ export function DashboardShell({
     <SidebarProvider>
       <Sidebar className="border-r border-border bg-sidebar">
         <SidebarHeader className="border-b border-border px-4 py-5">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-2xl bg-[#c14fe6] text-white shadow-sm">
-              <span className="text-sm font-black">EB</span>
-            </div>
+          <div className="flex items-center gap-3">
+            <SiteLogo
+              className="shrink-0"
+              imageClassName="h-10 w-auto"
+              width={160}
+              height={48}
+            />
             <div className="group-data-[collapsible=icon]:hidden">
               <p className="text-sm font-semibold tracking-wide text-foreground">Eventizo</p>
               <p className="text-xs text-muted-foreground">{title}</p>
             </div>
-          </Link>
+          </div>
         </SidebarHeader>
 
         <SidebarContent className="px-3 py-4">

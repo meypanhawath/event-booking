@@ -1,5 +1,7 @@
 "use client";
 
+import { SiteLogo } from "@/components/ui/site-logo";
+
 const navLinks = [
   { label: "Home", href: "#" },
   { label: "Events", href: "#" },
@@ -71,179 +73,6 @@ const socialLinks = [
   },
 ];
 
-// Placeholder event images using SVG patterns
-function EventImageLeft() {
-  return (
-    <div
-      className="relative w-full h-full min-h-64 overflow-hidden rounded-2xl"
-      style={{
-        background:
-          "linear-gradient(135deg, #1a0a2e 0%, #2d1155 50%, #1a0a2e 100%)",
-      }}
-    >
-      {/* Decorative circles / stage lights */}
-      <div className="absolute inset-0">
-        <div
-          className="absolute top-6 left-6 w-32 h-32 rounded-full opacity-20"
-          style={{
-            background: "radial-gradient(circle, #a855f7, transparent)",
-          }}
-        />
-        <div
-          className="absolute bottom-10 right-4 w-24 h-24 rounded-full opacity-15"
-          style={{
-            background: "radial-gradient(circle, #7c3aed, transparent)",
-          }}
-        />
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full opacity-10"
-          style={{
-            background: "radial-gradient(circle, #c084fc, transparent)",
-          }}
-        />
-      </div>
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full p-8 text-center">
-        <div className="mb-4 opacity-80">
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#c084fc"
-            strokeWidth="1.5"
-          >
-            <path d="M9 18V5l12-2v13" />
-            <circle cx="6" cy="18" r="3" />
-            <circle cx="18" cy="16" r="3" />
-          </svg>
-        </div>
-        <p
-          className="text-purple-300 text-sm font-medium mb-1"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
-          Live Music
-        </p>
-        <p
-          className="text-white text-xl font-bold"
-          style={{ fontFamily: "'Fraunces', serif" }}
-        >
-          Feel the Beat
-        </p>
-        <p
-          className="text-purple-400 text-xs mt-2 opacity-75"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
-          Book your concert seats
-        </p>
-        <div className="mt-5 flex gap-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className="w-1.5 rounded-full"
-              style={{
-                height: `${[20, 32, 16, 28, 12][i - 1]}px`,
-                background: "#a855f7",
-                opacity: 0.6 + i * 0.08,
-              }}
-            />
-          ))}
-        </div>
-      </div>
-      {/* Ticket stub bottom strip */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-1.5 opacity-40"
-        style={{
-          background: "linear-gradient(90deg, #a855f7, #7c3aed, #a855f7)",
-        }}
-      />
-    </div>
-  );
-}
-
-function EventImageRight() {
-  return (
-    <div
-      className="relative w-full h-full min-h-64 overflow-hidden rounded-2xl"
-      style={{
-        background:
-          "linear-gradient(135deg, #0a1a2e 0%, #112d55 50%, #0a1a2e 100%)",
-      }}
-    >
-      {/* Decorative */}
-      <div className="absolute inset-0">
-        <div
-          className="absolute top-6 right-6 w-28 h-28 rounded-full opacity-20"
-          style={{
-            background: "radial-gradient(circle, #38bdf8, transparent)",
-          }}
-        />
-        <div
-          className="absolute bottom-10 left-4 w-20 h-20 rounded-full opacity-15"
-          style={{
-            background: "radial-gradient(circle, #0ea5e9, transparent)",
-          }}
-        />
-      </div>
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full p-8 text-center">
-        <div className="mb-4 opacity-80">
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#38bdf8"
-            strokeWidth="1.5"
-          >
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-        </div>
-        <p
-          className="text-sky-300 text-sm font-medium mb-1"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
-          Upcoming Events
-        </p>
-        <p
-          className="text-white text-xl font-bold"
-          style={{ fontFamily: "'Fraunces', serif" }}
-        >
-          Don&apos;t Miss Out
-        </p>
-        <p
-          className="text-sky-400 text-xs mt-2 opacity-75"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
-          Explore hundreds of shows
-        </p>
-        <div className="mt-5 grid grid-cols-3 gap-1.5">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div
-              key={i}
-              className="w-5 h-5 rounded"
-              style={{
-                background:
-                  i % 3 === 0 ? "rgba(56,189,248,0.5)" : "rgba(56,189,248,0.1)",
-                border: "1px solid rgba(56,189,248,0.2)",
-              }}
-            />
-          ))}
-        </div>
-      </div>
-      <div
-        className="absolute bottom-0 left-0 right-0 h-1.5 opacity-40"
-        style={{
-          background: "linear-gradient(90deg, #38bdf8, #0ea5e9, #38bdf8)",
-        }}
-      />
-    </div>
-  );
-}
-
 export default function Footer() {
   return (
     <>
@@ -266,27 +95,7 @@ export default function Footer() {
           {/* CENTER – Brand & Nav */}
           <div className="flex flex-col items-center justify-center gap-6 py-4 w-full">
             {/* Logo */}
-            <div className="flex items-center gap-2">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                  stroke="#a855f7"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="rgba(168,85,247,0.15)"
-                />
-              </svg>
-              <span
-                className="text-2xl font-bold italic text-foreground"
-                style={{
-                  fontFamily: "'Fraunces', serif",
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                Eventizo
-              </span>
-            </div>
+            <SiteLogo imageClassName="h-12 w-auto" width={200} height={60} />
 
             {/* Tagline */}
             <p

@@ -6,8 +6,9 @@ export interface LoginRequest {
 export interface RegisterRequest {
   username: string
   email: string
+  phoneNumber: string
   password: string
-  confirmPassword: string  // Added this field
+  confirmPassword: string
 }
 
 export interface AuthResponse {
