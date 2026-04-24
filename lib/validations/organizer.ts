@@ -12,9 +12,7 @@ export const organizerStep2Schema = z.object({
     .min(1, "Account number is required")
     .regex(/^[0-9]{9,10}$/, "Account number must be 9-10 digits"),
   bankAccountName: z.string().min(1, "Account holder name is required").max(100, "Too long"),
-  currency: z.enum(["KHR", "USD"], {
-    required_error: "Please select a currency",
-  }),
+  currency: z.enum(["KHR", "USD"], { message: "Please select a currency" }),
 });
 
 export const organizerApplicationSchema = organizerStep1Schema.merge(organizerStep2Schema);

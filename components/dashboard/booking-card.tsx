@@ -56,7 +56,7 @@ export function BookingCard({ booking, compact = false }: BookingCardProps) {
     try {
       await cancelBooking(booking.id).unwrap();
       toast.success("Booking cancelled successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to cancel booking");
     }
   };
@@ -196,12 +196,17 @@ export function BookingCard({ booking, compact = false }: BookingCardProps) {
                     <X className="w-4 h-4 mr-1" />
                     Cancel
                   </Button>
-                  <Link href={`/bookings/${booking.id}/payment`}>
-                    <Button size="sm" className="bg-[#C14FE6] hover:bg-[#a855f7]">
-                      <CreditCard className="w-4 h-4 mr-1" />
-                      Pay Now
-                    </Button>
-                  </Link>
+                  {!booking.paymentProofUrl ? (
+                    <Link href={`/bookings/${booking.id}/payment`}>
+                      <Button
+                        size="sm"
+                        className="bg-[#C14FE6] hover:bg-[#a855f7]"
+                      >
+                        <CreditCard className="w-4 h-4 mr-1" />
+                        Pay Now
+                      </Button>
+                    </Link>
+                  ) : null}
                 </>
               )}
 
@@ -211,7 +216,7 @@ export function BookingCard({ booking, compact = false }: BookingCardProps) {
                     detail.ticketCode ? (
                       <span
                         key={detail.id}
-                        className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full font-mono"
+                        className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-2 text-sm font-mono font-semibold text-emerald-700"
                       >
                         <Ticket className="w-3 h-3" />
                         {detail.ticketCode}

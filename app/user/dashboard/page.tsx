@@ -108,9 +108,9 @@ export default function DashboardPage() {
                 <Skeleton className="h-3 w-48 mx-auto" />
               </CardContent>
             </Card>
-          ) : (
-            <ProfileCard user={user} />
-          )}
+	          ) : (
+	            <ProfileCard user={user ?? null} />
+	          )}
           <Card className="rounded-3xl border-border/70">
             <CardHeader>
               <CardTitle className="text-lg">Booking Trend</CardTitle>

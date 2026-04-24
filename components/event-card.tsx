@@ -2,10 +2,10 @@
 
 import { Calendar, MapPin, Star, Ticket } from "lucide-react";
 import Link from "next/link";
-import type { Event } from "@/lib/types/event";
+import type { EventResponse } from "@/lib/types/event";
 
 interface EventCardProps {
-  event: Event;
+  event: EventResponse;
 }
 
 export function EventCard({ event }: EventCardProps) {
@@ -99,13 +99,13 @@ export function EventCard({ event }: EventCardProps) {
                   {`From $${lowestPrice}`}
                 </span>
               )}
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {event.tickets.reduce((acc, t) => acc + t.available, 0)} left
-            </span>
-          </div>
-        </div>
-      </article>
+	            </div>
+	            <span className="text-xs text-muted-foreground">
+	              {event.tickets.reduce((acc, ticket) => acc + (ticket.available ?? 0), 0)} left
+	            </span>
+	          </div>
+	        </div>
+	      </article>
     </Link>
   );
 }

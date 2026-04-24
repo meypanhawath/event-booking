@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { betterAuth } from "better-auth";
+import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 
 import { BETTER_AUTH_BASE_PATH } from "@/lib/better-auth-config";
@@ -11,7 +11,15 @@ type BetterAuthInstance = ReturnType<typeof betterAuth>;
 let authPromise: Promise<BetterAuthInstance> | null = null;
 let migrationsPromise: Promise<void> | null = null;
 
-export async function getAuth() {
+function requireEnv(name: string) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+export async function getAuth(): Promise<BetterAuthInstance> {
   if (!authPromise) {
     authPromise = (async () => {
       const { DatabaseSync } = await import("node:sqlite");
@@ -41,11 +49,11 @@ export async function getAuth() {
           : {}),
       };
 
-      return betterAuth({
+      const authOptions: BetterAuthOptions = {
         appName: "Eventizo",
-        baseURL: process.env.BETTER_AUTH_URL,
+        baseURL: requireEnv("BETTER_AUTH_URL"),
         basePath: BETTER_AUTH_BASE_PATH,
-        secret: process.env.BETTER_AUTH_SECRET,
+        secret: requireEnv("BETTER_AUTH_SECRET"),
         database,
         emailAndPassword: {
           enabled: false,
@@ -64,19 +72,21 @@ export async function getAuth() {
             allowDifferentEmails: false,
           },
         },
-        trustedOrigins: process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : undefined,
+        trustedOrigins: [requireEnv("BETTER_AUTH_URL")],
         telemetry: {
           enabled: false,
         },
         plugins: [nextCookies()],
-      });
+      };
+
+      return betterAuth(authOptions);
     })().catch((error) => {
       authPromise = null;
       throw error;
     });
   }
 
-  return authPromise;
+  return authPromise!;
 }
 
 export async function ensureBetterAuthTables() {

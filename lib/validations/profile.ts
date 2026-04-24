@@ -10,7 +10,7 @@ export const personalProfileSchema = z.object({
     .trim()
     .min(9, "Phone number must be at least 9 digits.")
     .max(11, "Phone number is too long."),
-  profile: z.string().optional().default(""),
+  profile: z.string(),
 });
 
 export const organizerProfileSchema = z.object({

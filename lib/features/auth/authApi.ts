@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import type { LoginRequest, RegisterRequest, AuthResponse, UserProfile } from '@/lib/types/auth'
+import type { LoginRequest, RegisterRequest, AuthResponse } from '@/lib/types/auth'
+import type { UserResponse } from '@/lib/types/user'
 
 export const authApi = createApi({
   reducerPath: 'authApi',
@@ -25,7 +26,7 @@ export const authApi = createApi({
       }),
     }),
     
-    getMe: builder.query<UserProfile, void>({
+    getMe: builder.query<UserResponse, void>({
       query: () => '/me',
       providesTags: ['User'],
     }),

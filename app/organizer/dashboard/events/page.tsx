@@ -124,11 +124,11 @@ export default function MyEventsPage() {
                         <MapPin className="w-4 h-4" />
                         {event.location}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        {event.ticketCount ?? 0} tickets sold
-                      </div>
-                    </div>
+	                      <div className="flex items-center gap-2">
+	                        <Users className="w-4 h-4" />
+	                        {event.tickets.reduce((sum, ticket) => sum + (ticket.soldCount ?? 0), 0)} tickets sold
+	                      </div>
+	                    </div>
 
                     <div className="mt-4 flex gap-2">
                       <Link href={`/organizer/dashboard/events/${event.id}/edit`} className="flex-1">

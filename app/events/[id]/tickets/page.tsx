@@ -39,6 +39,53 @@ import { Button } from "@/components/ui/button";
 import { notifyError, notifySuccess, notifyWarning } from "@/lib/toast";
 
 const FETCH_SIZE = 200;
+
+function getApiErrorMessage(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return "Please try again.";
+  }
+
+  const maybe = error as {
+    status?: number | string;
+    data?: unknown;
+    error?: string;
+    message?: string;
+  };
+
+  if (typeof maybe.message === "string" && maybe.message.trim()) {
+    return maybe.message;
+  }
+
+  if (typeof maybe.error === "string" && maybe.error.trim()) {
+    return maybe.error;
+  }
+
+  if (typeof maybe.data === "string" && maybe.data.trim()) {
+    return maybe.data;
+  }
+
+  if (maybe.data && typeof maybe.data === "object") {
+    const dataObj = maybe.data as { message?: unknown; details?: unknown };
+    if (typeof dataObj.message === "string" && dataObj.message.trim()) {
+      return dataObj.message;
+    }
+    if (typeof dataObj.details === "string" && dataObj.details.trim()) {
+      return dataObj.details;
+    }
+    try {
+      return JSON.stringify(maybe.data);
+    } catch {
+      // ignore
+    }
+  }
+
+  if (maybe.status) {
+    return `Request failed (${String(maybe.status)}).`;
+  }
+
+  return "Please try again.";
+}
+
 const bookingFormSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required."),
   lastName: z.string().trim().min(1, "Last name is required."),
@@ -49,7 +96,7 @@ const bookingFormSchema = z.object({
     .trim()
     .min(9, "Phone number must be at least 9 digits.")
     .max(11, "Phone number is too long."),
-  quantity: z.coerce.number().int().min(1, "Minimum quantity is 1."),
+  quantity: z.number().int().min(1, "Minimum quantity is 1."),
 });
 
 type BookingFormValues = z.infer<typeof bookingFormSchema>;
@@ -115,14 +162,15 @@ export default function EventTicketsPage() {
   const isLoading = eventByIdQuery.isLoading || eventsListQuery.isLoading;
   const hasFatalError = eventByIdQuery.isError && eventsListQuery.isError;
   const error = eventsListQuery.error ?? eventByIdQuery.error;
+  const eventTickets = event?.tickets;
 
   const sortedTickets = useMemo(() => {
-    if (!event?.tickets) {
+    if (!eventTickets) {
       return [];
     }
 
-    return [...event.tickets].sort((a, b) => b.price - a.price);
-  }, [event?.tickets]);
+    return [...eventTickets].sort((a, b) => b.price - a.price);
+  }, [eventTickets]);
 
   const checkoutForm = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
@@ -179,6 +227,11 @@ export default function EventTicketsPage() {
   };
 
   const handleCheckoutSubmit = checkoutForm.handleSubmit(async (values) => {
+    if (!eventId || !Number.isFinite(eventId)) {
+      notifyError("Invalid event.", "Please open this page again.");
+      return;
+    }
+
     if (!selectedTicket?.id) {
       notifyError("Ticket selection is missing.", "Please choose a zone again.");
       return;
@@ -201,33 +254,18 @@ export default function EventTicketsPage() {
     }
 
     try {
-      const profileResponse = await fetch(`/api/v1/users/${currentUser.uuid}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstName: values.firstName,
-          lastName: values.lastName,
-          username: values.username,
-          email: values.email,
-          phoneNumber: values.phoneNumber,
-        }),
-      });
-
-      if (!profileResponse.ok) {
-        const profileError = await profileResponse.json().catch(() => null);
-        throw new Error(profileError?.message || "We could not save your contact information.");
-      }
-
-      const booking = await createBooking({
-        eventId: event.id,
+      const bookingPayload = {
+        eventId,
         details: [
           {
             ticketId: selectedTicket.id,
             qty: values.quantity,
           },
         ],
+      };
+
+      const booking = await createBooking({
+        ...bookingPayload,
       }).unwrap();
 
       setCheckoutOpen(false);
@@ -240,9 +278,15 @@ export default function EventTicketsPage() {
       router.refresh();
       return booking;
     } catch (error) {
+      console.error("Create booking failed", {
+        error,
+        eventId,
+        ticketId: selectedTicket.id,
+        qty: values.quantity,
+      });
       notifyError(
         "Checkout failed.",
-        error instanceof Error ? error.message : "Please try again.",
+        getApiErrorMessage(error),
       );
     }
   });
@@ -331,13 +375,13 @@ export default function EventTicketsPage() {
                   {event.organizer?.orgName ?? "Event venue"}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Armchair className="size-3.5" />
-                  {event.tickets.reduce(
-                    (acc, ticket) => acc + ticket.available,
-                    0,
-                  )}{" "}
-                  seats
-                </span>
+	                  <Armchair className="size-3.5" />
+	                  {event.tickets.reduce(
+	                    (acc, ticket) => acc + (ticket.available ?? 0),
+	                    0,
+	                  )}{" "}
+	                  seats
+	                </span>
               </div>
             </div>
           </div>
@@ -509,7 +553,7 @@ export default function EventTicketsPage() {
                     type="number"
                     min={1}
                     max={Math.max(1, selectedTicket?.available ?? 1)}
-                    {...checkoutForm.register("quantity")}
+                    {...checkoutForm.register("quantity", { valueAsNumber: true })}
                   />
                   {checkoutForm.formState.errors.quantity ? (
                     <p className="text-sm text-red-600">{checkoutForm.formState.errors.quantity.message}</p>

@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { CheckCircle, Clock, Mail, MapPin, Phone, Send } from "lucide-react";
 
-import Navbar from "./ui/navbar";
-
 const contactCards = [
   {
     icon: Mail,
@@ -110,9 +108,7 @@ export default function ContactUs() {
     "w-full rounded-xl border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20";
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
+    <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
         <section className="relative isolate border-b border-border">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(193,79,230,0.12),transparent_34%),linear-gradient(180deg,var(--background),var(--muted))]" />
           <div className="mx-auto max-w-6xl px-4 pb-16 pt-32 sm:px-6 lg:px-8 lg:pb-20">
@@ -321,6 +317,5 @@ export default function ContactUs() {
           </div>
         </section>
       </main>
-    </>
   );
 }

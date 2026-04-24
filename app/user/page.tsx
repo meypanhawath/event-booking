@@ -34,6 +34,8 @@ import {
 import { useGetTicketsQuery } from "@/lib/features/tickets/ticketsApi";
 import type { TicketListItem, TicketStatus } from "@/lib/types/ticket";
 
+export const dynamic = "force-dynamic";
+
 const PAGE_SIZE = 8;
 
 const tabs: Array<{ key: TicketStatus; label: string }> = [

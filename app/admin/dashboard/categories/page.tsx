@@ -13,6 +13,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Tag, Plus, Trash2, FolderOpen } from "lucide-react";
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === "object" && error !== null) {
+    const maybe = error as { data?: { message?: unknown } };
+    const message = maybe.data?.message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return fallback;
+};
+
 export default function CategoriesPage() {
   const [newCategory, setNewCategory] = useState("");
 
@@ -28,8 +37,8 @@ export default function CategoriesPage() {
       await createCategory({ name: newCategory.trim() }).unwrap();
       toast.success("Category created successfully");
       setNewCategory("");
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to create category");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to create category"));
     }
   };
 
@@ -39,8 +48,8 @@ export default function CategoriesPage() {
     try {
       await deleteCategory(id).unwrap();
       toast.success("Category deleted");
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to delete category");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to delete category"));
     }
   };
 

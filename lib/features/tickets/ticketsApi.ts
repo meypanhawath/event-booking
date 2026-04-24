@@ -131,7 +131,7 @@ export const ticketsApi = createApi({
     getTickets: builder.query<TicketsResponse, TicketsQueryParams | void>({
       query: (params) => ({
         url: "/tickets",
-        params,
+        params: params ?? undefined,
       }),
       transformResponse: normalizeResponse,
       providesTags: ["Ticket"],

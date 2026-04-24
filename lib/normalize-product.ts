@@ -1,6 +1,6 @@
 import { ProductResponse } from "./types/product";
 
-type ProductInput = Partial<ProductResponse> & {
+type ProductInput = Omit<Partial<ProductResponse>, "category" | "thumbnailUrl"> & {
   category?: { id?: number; name?: string } | string | null;
   thumbnailUrl?: string | string[] | null;
   images?: string[] | null;

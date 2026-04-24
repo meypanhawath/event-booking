@@ -211,14 +211,14 @@ export default function OrganizerOverviewPage() {
                       <p className="text-xs text-muted-foreground">
                         {new Date(event.startDate).toLocaleDateString()} · {event.location}
                       </p>
-                      <div className="flex gap-2 mt-1">
-                        <span className="text-xs text-muted-foreground">
-                          {event.tickets.reduce((sum, t) => sum + t.soldCount, 0)} sold
-                        </span>
-                        <span className="text-xs text-[#C14FE6]">
-                          {event.tickets.reduce((sum, t) => sum + t.available, 0)} available
-                        </span>
-                      </div>
+	                      <div className="flex gap-2 mt-1">
+	                        <span className="text-xs text-muted-foreground">
+	                          {event.tickets.reduce((sum, t) => sum + (t.soldCount ?? 0), 0)} sold
+	                        </span>
+	                        <span className="text-xs text-[#C14FE6]">
+	                          {event.tickets.reduce((sum, t) => sum + (t.available ?? 0), 0)} available
+	                        </span>
+	                      </div>
                     </div>
                   </div>
                   <Link href={`/organizer/dashboard/events/${event.id}/bookings`}>

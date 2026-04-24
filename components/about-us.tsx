@@ -1,8 +1,6 @@
 import Image from "next/image";
 import { Headphones, Search, ShieldCheck, Ticket } from "lucide-react";
 
-import Navbar from "./ui/navbar";
-
 const highlights = [
   {
     title: "Your ticket is on the way",
@@ -104,9 +102,7 @@ function PersonCard({
 
 export default function AboutUs() {
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
+    <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
         <section className="relative isolate border-b border-border">
           <Image src="/rub.webp" alt="Event audience" fill priority className="-z-20 object-cover" />
           <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(18,18,18,0.72),rgba(18,18,18,0.78))] dark:bg-[linear-gradient(180deg,rgba(18,18,18,0.78),rgba(10,10,10,0.86))]" />
@@ -173,6 +169,5 @@ export default function AboutUs() {
           </div>
         </section>
       </main>
-    </>
   );
 }

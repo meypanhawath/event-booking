@@ -14,6 +14,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import type { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
 import {
   TrendingUp,
   Calendar,
@@ -21,37 +22,51 @@ import {
   Ticket,
 } from "lucide-react";
 import { useGetMyEventsQuery } from "@/lib/features/events/eventsApi";
-
-const COLORS = ["#C14FE6", "#a855f7", "#8b5cf6", "#6366f1", "#3b82f6"];
+import { useGetEventBookingsQuery } from "@/lib/features/bookings/bookingApi";
+import type { OrganizerBookingResponse } from "@/lib/types/booking";
 
 export default function AnalyticsPage() {
   const { data: eventsData, isLoading: eventsLoading } = useGetMyEventsQuery({ page: 0, size: 100 });
-  const { data: bookingsData, isLoading: bookingsLoading } = useGetOrganizerBookingsQuery({ page: 0, size: 100 });
+  const firstEventId = eventsData?.content?.[0]?.id;
+  const { data: bookingsData, isLoading: bookingsLoading } = useGetEventBookingsQuery(
+    { eventId: firstEventId ?? 0, page: 0, size: 100 },
+    { skip: !firstEventId },
+  );
 
   const events = eventsData?.content ?? [];
-  const bookings = bookingsData?.content ?? [];
+  const bookings: OrganizerBookingResponse[] = bookingsData?.content ?? [];
 
   // Calculate stats
-  const totalRevenue = bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
-  const totalTickets = bookings.reduce((sum, b) => sum + (b.details?.reduce((dSum, d) => dSum + d.qty, 0) || 0), 0);
+  const totalRevenue = bookings.reduce((sum, booking) => sum + (booking.totalAmount || 0), 0);
+  const totalTickets = bookings.reduce(
+    (sum, booking) =>
+      sum + (booking.details?.reduce((detailsSum, detail) => detailsSum + detail.qty, 0) || 0),
+    0,
+  );
   
   // Revenue by event
-  const revenueByEvent = events.map(event => ({
-    name: event.title.length > 20 ? event.title.substring(0, 20) + "..." : event.title,
-    revenue: bookings
-      .filter(b => b.event?.id === event.id)
-      .reduce((sum, b) => sum + (b.totalAmount || 0), 0),
-    tickets: bookings
-      .filter(b => b.event?.id === event.id)
-      .reduce((sum, b) => sum + (b.details?.reduce((dSum, d) => dSum + d.qty, 0) || 0), 0),
-  })).filter(e => e.revenue > 0);
+  const revenueByEvent = events
+    .map((event) => ({
+      name: event.title.length > 20 ? `${event.title.substring(0, 20)}...` : event.title,
+      revenue: bookings
+        .filter((booking) => booking.event?.id === event.id)
+        .reduce((sum, booking) => sum + (booking.totalAmount || 0), 0),
+      tickets: bookings
+        .filter((booking) => booking.event?.id === event.id)
+        .reduce(
+          (sum, booking) =>
+            sum + (booking.details?.reduce((dSum, d) => dSum + d.qty, 0) || 0),
+          0,
+        ),
+    }))
+    .filter((entry) => entry.revenue > 0);
 
   // Status distribution
   const statusCounts = {
-    PENDING: bookings.filter(b => b.status === "PENDING").length,
-    CONFIRMED: bookings.filter(b => b.status === "CONFIRMED").length,
-    REJECTED: bookings.filter(b => b.status === "REJECTED").length,
-    CANCELLED: bookings.filter(b => b.status === "CANCELLED").length,
+    PENDING: bookings.filter((booking) => booking.status === "PENDING").length,
+    CONFIRMED: bookings.filter((booking) => booking.status === "CONFIRMED").length,
+    REJECTED: bookings.filter((booking) => booking.status === "REJECTED").length,
+    CANCELLED: bookings.filter((booking) => booking.status === "CANCELLED").length,
   };
 
   const pieData = [
@@ -59,7 +74,7 @@ export default function AnalyticsPage() {
     { name: "Confirmed", value: statusCounts.CONFIRMED, color: "#10b981" },
     { name: "Rejected", value: statusCounts.REJECTED, color: "#ef4444" },
     { name: "Cancelled", value: statusCounts.CANCELLED, color: "#6b7280" },
-  ].filter(d => d.value > 0);
+  ].filter((d) => d.value > 0);
 
   return (
     <div className="space-y-6">
@@ -144,7 +159,11 @@ export default function AnalyticsPage() {
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip 
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, "Revenue"]}
+                    formatter={(value: ValueType | undefined) => {
+                      const numeric =
+                        typeof value === "number" ? value : Number(Array.isArray(value) ? value[0] : value ?? 0);
+                      return [`$${numeric.toFixed(2)}`, "Revenue"];
+                    }}
                     contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))" }}
                   />
                   <Bar dataKey="revenue" fill="#C14FE6" radius={[4, 4, 0, 0]} />
@@ -183,7 +202,10 @@ export default function AnalyticsPage() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number, name: string) => [value, name]}
+                    formatter={(value: ValueType | undefined, name: NameType | undefined) => [
+                      value ?? 0,
+                      String(name ?? ""),
+                    ]}
                     contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))" }}
                   />
                 </PieChart>

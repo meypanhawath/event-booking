@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import SiteChrome from "@/components/layout/site-chrome";
 import "./globals.css";
 import StoreProvider from "../components/StoreProvider";
-import Footer from "@/components/ui/Footer";
 
 export const metadata: Metadata = {
   title: "Eventizo",
@@ -25,9 +25,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <StoreProvider>
-            {children}
-        <Toaster position="top-right" offset={80} />
-            <Footer />
+            <SiteChrome>{children}</SiteChrome>
+            <Toaster position="top-right" offset={80} />
           </StoreProvider>
         </ThemeProvider>
       </body>

@@ -168,7 +168,7 @@ export function DashboardShell({
           <div className="flex flex-wrap items-center gap-3 px-4 py-4 lg:px-8">
             <SidebarTrigger className="lg:hidden" />
             <div className="min-w-0 flex-1">
-              <Breadcrumb>
+              <Breadcrumb className="hidden sm:block">
                 <BreadcrumbList>
                   {crumbs.map((crumb, index) => {
                     const href = `/${crumbs.slice(0, index + 1).join("/")}`;
@@ -193,7 +193,7 @@ export function DashboardShell({
               </Breadcrumb>
               <div className="mt-2">
                 <h1 className="text-xl font-semibold tracking-tight text-foreground lg:text-2xl">{activeItem?.label ?? title}</h1>
-                <p className="text-base text-muted-foreground">{subtitle}</p>
+                <p className="text-sm text-muted-foreground sm:text-base">{subtitle}</p>
               </div>
             </div>
             <div className="ml-auto flex items-center gap-3">

@@ -57,7 +57,7 @@ export default function ApplyOrganizerPage() {
     },
   });
 
-  const handleStep1Next = (data: OrganizerStep1Data) => {
+  const handleStep1Next = () => {
     if (!orgProfilePath) {
       toast.error("Please upload an organization profile image");
       return;
@@ -96,7 +96,7 @@ export default function ApplyOrganizerPage() {
 
   if (user?.roles?.includes("ROLE_ORGANIZER")) {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
+      <div className="mx-auto w-full max-w-2xl">
         <Card>
           <CardContent className="py-16 text-center">
             <CheckCircle className="h-16 w-16 text-emerald-500 mx-auto mb-4" />
@@ -120,7 +120,7 @@ export default function ApplyOrganizerPage() {
 
   if (user?.organizerStatus === "PENDING") {
     return (
-      <div className="p-6 max-w-2xl mx-auto">
+      <div className="mx-auto w-full max-w-2xl">
         <Card>
           <CardContent className="py-16 text-center">
             <CheckCircle className="h-16 w-16 text-amber-500 mx-auto mb-4" />
@@ -143,7 +143,7 @@ export default function ApplyOrganizerPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
+    <div className="mx-auto w-full max-w-2xl">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">

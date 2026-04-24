@@ -20,17 +20,23 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
-  UserCheck,
   Clock,
   Banknote,
-  MapPin,
   CheckCircle,
   XCircle,
-  Eye,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { UserResponse } from "@/lib/types/admin";
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === "object" && error !== null) {
+    const maybe = error as { data?: { message?: unknown } };
+    const message = maybe.data?.message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return fallback;
+};
 
 export default function PendingOrganizersPage() {
   const [page, setPage] = useState(0);
@@ -62,8 +68,8 @@ export default function PendingOrganizersPage() {
       setSelectedUser(null);
       setRemark("");
       setActionType(null);
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to update status");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to update status"));
     }
   };
 

@@ -23,33 +23,33 @@ import {
     FieldLabel, FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {
-    InputGroup,
-    InputGroupAddon,
-    InputGroupText,
-    InputGroupTextarea,
-} from "@/components/ui/input-group"
-import {loginAdmin} from "@/lib/admin-auth";
-import {redirect} from "next/navigation";
-import {signInSocial} from "@/lib/actions/auth-client";
+	import {
+	    InputGroup,
+	    InputGroupAddon,
+	    InputGroupText,
+	    InputGroupTextarea,
+	} from "@/components/ui/input-group"
+	import {loginAdmin} from "@/lib/admin-auth";
+	import { useRouter } from "next/navigation";
+	import {signInSocial} from "@/lib/actions/auth-client";
 
-const formSchema = z.object({
-    email: z
-        .string(),
-    password: z
-        .string()
-        .min(4, "Password must be at least 4 characters.")
-    })
+	const formSchema = z.object({
+	    emailOrUsername: z.string().trim().min(1, "Email or username is required."),
+	    password: z
+	        .string()
+	        .min(4, "Password must be at least 4 characters.")
+	    })
 
 
 export function FormLogin() {
+    const router = useRouter();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            email: "",
-            password: "",
-        },
-    })
+	        defaultValues: {
+	            emailOrUsername: "",
+	            password: "",
+	        },
+	    })
 
     async function handleSocialAuth(provider: "google" | "github"){
         await signInSocial(provider)
@@ -66,7 +66,7 @@ export function FormLogin() {
         }
 
         if (isSuccess) {
-            redirect("/dashboard")
+            router.push("/dashboard")
         }
     }
 
@@ -81,19 +81,19 @@ export function FormLogin() {
             <CardContent>
                 <form id="form-rhf-demo" onSubmit={form.handleSubmit(onSubmit)}>
                     <FieldGroup>
-                        <Controller
-                            name="email"
-                            control={form.control}
-                            render={({ field, fieldState }) => (
-                                <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor="form-rhf-demo-email">
-                                        Email
-                                    </FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id="form-rhf-demo-title"
-                                        aria-invalid={fieldState.invalid}
-                                        placeholder="Example@gmail.com"
+	                        <Controller
+	                            name="emailOrUsername"
+	                            control={form.control}
+	                            render={({ field, fieldState }) => (
+	                                <Field data-invalid={fieldState.invalid}>
+	                                    <FieldLabel htmlFor="form-rhf-demo-email">
+	                                        Email or username
+	                                    </FieldLabel>
+	                                    <Input
+	                                        {...field}
+	                                        id="form-rhf-demo-title"
+	                                        aria-invalid={fieldState.invalid}
+	                                        placeholder="Example@gmail.com"
                                     />
                                     {fieldState.invalid && (
                                         <FieldError errors={[fieldState.error]} />

@@ -118,13 +118,14 @@ export function ProfileSettings({ redirectTo }: ProfileSettingsProps) {
   }
 
   async function handlePersonalSubmit(values: PersonalProfileInput) {
-    if (!user.uuid) {
+    const userUuid = user?.uuid;
+    if (!userUuid) {
       notifyError("Profile data is unavailable.", "Please refresh and try again.");
       return;
     }
 
     try {
-      const response = await fetch(`/api/v1/users/${user.uuid}`, {
+      const response = await fetch(`/api/v1/users/${userUuid}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

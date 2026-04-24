@@ -95,7 +95,7 @@ const PaginationEllipsis = ({
   ...props
 }: React.HTMLAttributes<HTMLSpanElement>) => (
   <span
-    aria-aria-hidden
+    aria-hidden="true"
     className={cn("flex h-10 w-10 items-center justify-center", className)}
     {...props}
   >

@@ -1,5 +1,3 @@
-import Navbar from "@/components/ui/navbar";
-
 export default function EventsLayout({
   children,
   modal,
@@ -9,9 +7,6 @@ export default function EventsLayout({
 }) {
   return (
     <>
-      <header className="pb-10">
-        <Navbar />
-      </header>
       <main className="pt-10">{children}</main>
 
       {modal}

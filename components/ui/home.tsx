@@ -6,7 +6,7 @@ import { Goal, Music4, PartyPopper, Ticket } from "lucide-react";
 import { ProductResponse } from "@/lib/types/product";
 import Navbar from "@/components/ui/navbar";
 import Link from "next/link";
-import ProductPage from "@/app/events/page";
+import { ProductCard } from "@/components/product-card";
 
 type UserResponse = {
     id: number;
@@ -160,17 +160,16 @@ export default function Home() {
                         <p className="mt-4 text-sm text-red-500">{errorMessage}</p>
                     ) : null}
 
-                    <div className="mt-6">
-                        <ProductPage
-                            activeCategory={activeCategory}
-                            embedded
-                            limit={4}
-                            products={visibleProducts}
-                        />
-                    </div>
-                </section>
+	                    <div className="mt-6">
+	                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+	                          {visibleProducts.map((product) => (
+	                            <ProductCard key={product.id} product={product} />
+	                          ))}
+	                        </div>
+	                    </div>
+	                </section>
 
-                <section className="container mx-auto mt-12">
+	                <section className="container mx-auto mt-12">
                     <div className="flex items-end justify-between gap-4">
                         <h2 className="text-xl font-semibold text-foreground">Show</h2>
                         <Link className="text-sm text-muted-foreground transition hover:text-foreground" href="/show">
@@ -178,15 +177,14 @@ export default function Home() {
                         </Link>
                     </div>
 
-                    <div className="mt-6">
-                        <ProductPage
-                            activeCategory={activeCategory}
-                            embedded
-                            limit={4}
-                            products={visibleProducts}
-                        />
-                    </div>
-                </section>
+	                    <div className="mt-6">
+	                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+	                          {visibleProducts.map((product) => (
+	                            <ProductCard key={product.id} product={product} />
+	                          ))}
+	                        </div>
+	                    </div>
+	                </section>
 
                 <section className="container mx-auto mt-14">
                     <div className="text-center">

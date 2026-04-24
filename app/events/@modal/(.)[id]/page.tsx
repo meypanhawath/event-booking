@@ -37,7 +37,7 @@ export default function EventInterceptedModalPage() {
     });
 
   const totalAvailable = event?.tickets.reduce(
-    (acc, ticket) => acc + ticket.available,
+    (acc, ticket) => acc + (ticket.available ?? 0),
     0,
   );
 

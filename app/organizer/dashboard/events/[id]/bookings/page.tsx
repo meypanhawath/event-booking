@@ -8,6 +8,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -22,6 +29,10 @@ import {
   CheckCircle,
   XCircle,
   ArrowLeft,
+  Image as ImageIcon,
+  ExternalLink,
+  AlertTriangle,
+  LoaderCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -34,6 +45,8 @@ export default function EventBookingsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [page, setPage] = useState(0);
   const pageSize = 10;
+  const [activeProofUrl, setActiveProofUrl] = useState<string | null>(null);
+  const [proofState, setProofState] = useState<"idle" | "loading" | "loaded" | "error">("idle");
 
   const { data, isLoading, isError } = useGetEventBookingsQuery({
     eventId,
@@ -60,6 +73,7 @@ export default function EventBookingsPage() {
       toast.error("Failed to verify booking");
     }
   };
+
 
   return (
     <div className="space-y-6">
@@ -142,25 +156,31 @@ export default function EventBookingsPage() {
           {filteredBookings.map((booking) => (
             <Card key={booking.id} className="overflow-hidden">
               <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#C14FE6]/10 flex items-center justify-center shrink-0">
-                      <User className="w-5 h-5 text-[#C14FE6]" />
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#C14FE6]/10">
+                      <User className="h-5 w-5 text-[#C14FE6]" />
                     </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {booking.user?.firstName} {booking.user?.lastName}
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold text-foreground">
+                        {booking.customer?.name ?? "Customer"}
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        {booking.user?.email}
+                      <p className="truncate text-sm text-muted-foreground">
+                        {booking.customer?.email ?? "No email"}
                       </p>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="w-3 h-3" />
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">
+                          <DollarSign className="h-3.5 w-3.5" />
                           ${booking.totalAmount?.toFixed(2)}
                         </span>
                         <span>
                           {booking.details?.reduce((sum, d) => sum + d.qty, 0)} tickets
+                        </span>
+                        <span>
+                          Proof:{" "}
+                          <span className={booking.paymentProofUrl ? "text-emerald-600" : "text-amber-600"}>
+                            {booking.paymentProofUrl ? "Uploaded" : "Missing"}
+                          </span>
                         </span>
                       </div>
                     </div>
@@ -177,6 +197,19 @@ export default function EventBookingsPage() {
 
                     {booking.status === "PENDING" && (
                       <div className="flex gap-2">
+                        {booking.paymentProofUrl ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setActiveProofUrl(booking.paymentProofUrl);
+                              setProofState("loading");
+                            }}
+                          >
+                            <ImageIcon className="w-4 h-4 mr-1" />
+                            View Proof
+                          </Button>
+                        ) : null}
                         <Button
                           size="sm"
                           className="bg-emerald-500 hover:bg-emerald-600 text-white"
@@ -235,6 +268,78 @@ export default function EventBookingsPage() {
           ))}
         </div>
       )}
+
+      <Dialog
+        open={Boolean(activeProofUrl)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveProofUrl(null);
+            setProofState("idle");
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Payment Proof</DialogTitle>
+            <DialogDescription>
+              Verify the uploaded receipt before confirming or rejecting the booking.
+            </DialogDescription>
+          </DialogHeader>
+          {activeProofUrl ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground break-all">
+                  {activeProofUrl}
+                </p>
+                <a
+                  href={activeProofUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-xs font-medium text-[#C14FE6] hover:underline"
+                >
+                  <ExternalLink className="size-3.5" />
+                  Open in new tab
+                </a>
+              </div>
+
+              <div className="relative overflow-hidden rounded-xl border border-border bg-muted">
+                {proofState === "loading" ? (
+                  <div className="absolute inset-0 grid place-items-center bg-muted/60">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <LoaderCircle className="size-4 animate-spin" />
+                      Loading image...
+                    </div>
+                  </div>
+                ) : null}
+
+                {proofState === "error" ? (
+                  <div className="absolute inset-0 grid place-items-center bg-muted/70 p-6 text-center">
+                    <div className="max-w-md">
+                      <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                        <AlertTriangle className="size-5" />
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-foreground">Could not load proof</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        This can happen if the URL is invalid, blocked, or slow. Use “Open in new tab” above.
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={activeProofUrl}
+                  src={activeProofUrl}
+                  alt="Payment proof"
+                  className="h-auto w-full object-contain"
+                  onLoad={() => setProofState("loaded")}
+                  onError={() => setProofState("error")}
+                />
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       {/* Pagination */}
       {totalPages > 1 && (

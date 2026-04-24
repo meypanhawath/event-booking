@@ -28,9 +28,9 @@ export const bookingsApi = createApi({
       PaginatedBookings,
       { page?: number; size?: number } | void
     >({
-      query: (params = { page: 0, size: 10 }) => ({
+      query: (params) => ({
         url: "/bookings/me",
-        params,
+        params: params ?? { page: 0, size: 10 },
       }),
       providesTags: ["Booking"],
     }),

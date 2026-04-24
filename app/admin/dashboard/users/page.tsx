@@ -22,6 +22,15 @@ import {
   Mail,
 } from "lucide-react";
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === "object" && error !== null) {
+    const maybe = error as { data?: { message?: unknown } };
+    const message = maybe.data?.message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return fallback;
+};
+
 export default function AllUsersPage() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
@@ -44,8 +53,8 @@ export default function AllUsersPage() {
       await deleteUser(uuid).unwrap();
       toast.success("User deleted successfully");
       setDeleteConfirm(null);
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to delete user");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to delete user"));
     }
   };
 
