@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 
 import FilterPage from "@/components/ui/filter";
 import { EventCard } from "@/components/event-card";
 import { useGetEventsQuery } from "@/lib/features/events/eventsApi";
+import { useGetCategoriesQuery } from "@/lib/features/admin/adminApi";
+import type { EventResponse } from "@/lib/types/event";
 import {
   Pagination,
   PaginationContent,
@@ -16,9 +18,16 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-const PRICE_RANGES = ["50-100", "100-200", "200-300", "400-500"] as const;
-
 const PAGE_SIZE = 8;
+const PRICE_STEP = 50;
+const MAX_PRICE_RANGES = 10;
+
+const getLowestPrice = (event: EventResponse) =>
+  event.tickets.length
+    ? Math.min(...event.tickets.map((ticket) => ticket.price))
+    : 0;
+
+const getWhereLabel = (event: EventResponse) => event.location || "Unknown";
 
 export default function EventsPage() {
   const [activeCategory, setActiveCategory] = useState("All");
@@ -38,6 +47,8 @@ export default function EventsPage() {
     size: 200,
   });
 
+  const { data: categoriesData } = useGetCategoriesQuery();
+
   useEffect(() => {
     document.body.style.overflow = isFilterOpen ? "hidden" : "";
 
@@ -47,7 +58,6 @@ export default function EventsPage() {
   }, [isFilterOpen]);
 
   const events = eventsData?.content ?? [];
-  const totalElements = eventsData?.totalElements ?? 0;
 
   const allFilterEvents = events;
 
@@ -58,22 +68,11 @@ export default function EventsPage() {
       return "Unknown";
     }
 
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = date
-      .toLocaleDateString("en-US", { month: "short" })
-      .toLowerCase();
+    const month = date.toLocaleDateString("en-US", { month: "short" });
     const year = date.getFullYear();
 
-    return `${day}-${month}-${year}`;
+    return `${month} ${year}`;
   };
-
-  const getLowestPrice = (event: (typeof allFilterEvents)[number]) =>
-    event.tickets.length
-      ? Math.min(...event.tickets.map((ticket) => ticket.price))
-      : 0;
-
-  const getWhereLabel = (event: (typeof allFilterEvents)[number]) =>
-    event.organizer?.orgName ?? "Unknown";
 
   const matchesPriceRange = (
     event: (typeof allFilterEvents)[number],
@@ -89,26 +88,49 @@ export default function EventsPage() {
     return lowestPrice >= min && lowestPrice <= max;
   };
 
-  const categoryFilters = [
-    "All",
-    ...Array.from(new Set(allFilterEvents.map((event) => event.category.name))),
-  ];
+  const categoryFilters = useMemo(() => {
+    const fromApi = (categoriesData ?? []).map((c) => c.name).filter(Boolean);
+    const fromEvents = allFilterEvents.map((event) => event.category?.name).filter(Boolean);
+    return ["All", ...Array.from(new Set([...fromApi, ...fromEvents]))];
+  }, [allFilterEvents, categoriesData]);
 
-  const whenFilters = [
-    "All",
-    ...Array.from(
+  const whenFilters = useMemo(() => {
+    const unique = Array.from(
       new Set(allFilterEvents.map((event) => getWhenLabel(event.startDate))),
-    ),
-  ];
+    ).filter(Boolean);
+    unique.sort((a, b) => {
+      if (a === "Unknown") return 1;
+      if (b === "Unknown") return -1;
+      const aDate = new Date(`${a} 01`);
+      const bDate = new Date(`${b} 01`);
+      return aDate.getTime() - bDate.getTime();
+    });
+    return ["All", ...unique];
+  }, [allFilterEvents]);
 
-  const whereFilters = [
-    "All",
-    ...Array.from(
-      new Set(allFilterEvents.map((event) => getWhereLabel(event))),
-    ),
-  ];
+  const whereFilters = useMemo(() => {
+    const unique = Array.from(new Set(allFilterEvents.map((event) => getWhereLabel(event))))
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+    return ["All", ...unique];
+  }, [allFilterEvents]);
 
-  const priceFilters = ["All", ...PRICE_RANGES];
+  const priceFilters = useMemo(() => {
+    const lowestPrices = allFilterEvents.map(getLowestPrice).filter((n) => Number.isFinite(n));
+    const maxLowestPrice = lowestPrices.length ? Math.max(...lowestPrices) : 0;
+    const rangeCount = Math.min(
+      MAX_PRICE_RANGES,
+      Math.max(1, Math.ceil(maxLowestPrice / PRICE_STEP)),
+    );
+
+    const ranges = Array.from({ length: rangeCount }, (_, i) => {
+      const min = i * PRICE_STEP;
+      const max = (i + 1) * PRICE_STEP;
+      return `${min}-${max}`;
+    });
+
+    return ["All", ...ranges];
+  }, [allFilterEvents]);
 
   const filteredEvents = allFilterEvents.filter((event) => {
     const matchesCategory =

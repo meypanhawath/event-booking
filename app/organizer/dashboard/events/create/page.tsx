@@ -29,6 +29,7 @@ import {
 import Link from "next/link";
 import { z } from "zod";
 import { hasRole } from "@/lib/auth-utils";
+import { useGetCategoriesQuery } from "@/lib/features/admin/adminApi";
 
 // Only 4 ticket types
 const TICKET_TYPES = ["SILVER", "GOLD", "PLATINUM", "DIAMOND"] as const;
@@ -89,6 +90,11 @@ type CreateEventData = z.infer<typeof createEventSchema>;
 export default function CreateEventPage() {
   const router = useRouter();
   const { data: user } = useGetMeQuery();
+  const {
+    data: categories,
+    isLoading: isCategoriesLoading,
+    isError: isCategoriesError,
+  } = useGetCategoriesQuery();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [thumbnailPath, setThumbnailPath] = useState<string>("");
 
@@ -230,20 +236,42 @@ export default function CreateEventPage() {
             <div className="space-y-2">
               <Label htmlFor="categoryId">Category <span className="text-red-500">*</span></Label>
               <Select
-                defaultValue="0"
-                onValueChange={(value) => form.setValue("categoryId", Number(value))}
+                value={form.watch("categoryId") ? String(form.watch("categoryId")) : ""}
+                onValueChange={(value) => {
+                  form.setValue("categoryId", Number(value), {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Concerts</SelectItem>
-                  <SelectItem value="2">Sports</SelectItem>
-                  <SelectItem value="3">Theater</SelectItem>
-                  <SelectItem value="4">Workshops</SelectItem>
-                  <SelectItem value="5">Festivals</SelectItem>
+                  {isCategoriesLoading ? (
+                    <SelectItem value="__loading__" disabled>
+                      Loading categories...
+                    </SelectItem>
+                  ) : isCategoriesError ? (
+                    <SelectItem value="__error__" disabled>
+                      Failed to load categories
+                    </SelectItem>
+                  ) : categories && categories.length > 0 ? (
+                    categories.map((category) => (
+                      <SelectItem key={category.id} value={String(category.id)}>
+                        {category.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="__empty__" disabled>
+                      No categories available
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
+              {form.formState.errors.categoryId && (
+                <p className="text-sm text-red-600">{form.formState.errors.categoryId.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">

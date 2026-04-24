@@ -42,7 +42,7 @@ export default function DashboardLayout({
   return (
     <DashboardShell
       title="Customer Dashboard"
-      subtitle="Track bookings, manage your profile, and keep your account details updated."
+      subtitle=""
       items={navItems}
       user={currentUser}
     >

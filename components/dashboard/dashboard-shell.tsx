@@ -114,10 +114,6 @@ export function DashboardShell({
               width={160}
               height={48}
             />
-            <div className="group-data-[collapsible=icon]:hidden">
-              <p className="text-sm font-semibold tracking-wide text-foreground">Eventizo</p>
-              <p className="text-xs text-muted-foreground">{title}</p>
-            </div>
           </div>
         </SidebarHeader>
 

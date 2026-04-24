@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { BookingResponse } from "@/lib/types/booking";
 import { cn } from "@/lib/utils";
+import { getAssetUrl } from "@/lib/file-url";
 
 interface BookingCardProps {
   booking: BookingResponse;
@@ -51,6 +52,9 @@ import { useCancelBookingMutation } from "@/lib/features/bookings/bookingApi";
 
 export function BookingCard({ booking, compact = false }: BookingCardProps) {
   const [cancelBooking, { isLoading: isCancelling }] = useCancelBookingMutation();
+  const paymentProofUrl = getAssetUrl(
+    booking.paymentProofUrl ?? booking.paymentProofPath,
+  );
 
   const handleCancel = async () => {
     try {
@@ -196,7 +200,7 @@ export function BookingCard({ booking, compact = false }: BookingCardProps) {
                     <X className="w-4 h-4 mr-1" />
                     Cancel
                   </Button>
-                  {!booking.paymentProofUrl ? (
+                  {!paymentProofUrl ? (
                     <Link href={`/bookings/${booking.id}/payment`}>
                       <Button
                         size="sm"

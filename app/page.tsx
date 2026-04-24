@@ -73,10 +73,6 @@ export default function Home() {
 
         <SportsAndGamesSections />
 
-        <section className="container mx-auto mt-12 px-4 sm:px-6 lg:px-8 w-full pt-20">
-          <TrustByCompany />
-        </section>
-
         <section className="mt-10 w-full pt-15 pb-15">
           <Review />
         </section>

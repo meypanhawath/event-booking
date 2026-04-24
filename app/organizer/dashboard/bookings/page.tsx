@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import {
   Select,
   SelectContent,
@@ -19,6 +20,7 @@ import {
   User,
   Calendar,
   DollarSign,
+  ArrowRight,
 } from "lucide-react";
 import { useGetMyEventsQuery } from "@/lib/features/events/eventsApi";
 
@@ -167,6 +169,14 @@ export default function OrganizerBookingsPage() {
                     <span className="text-sm text-muted-foreground">
                       {booking.details?.reduce((sum, d) => sum + d.qty, 0)} tickets
                     </span>
+                    {booking.event?.id ? (
+                      <Link href={`/organizer/dashboard/events/${booking.event.id}/bookings`}>
+                        <Button size="sm" variant="outline">
+                          <ArrowRight className="w-4 h-4 mr-1" />
+                          Verify
+                        </Button>
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
 

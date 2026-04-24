@@ -6,7 +6,7 @@ import "./globals.css";
 import StoreProvider from "../components/StoreProvider";
 
 export const metadata: Metadata = {
-  title: "Eventizo",
+  title: "",
   description: "Book amazing events",
 };
 

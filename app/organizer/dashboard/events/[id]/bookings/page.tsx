@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { getAssetUrl } from "@/lib/file-url";
 
 type StatusFilter = "ALL" | "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED";
 
@@ -153,9 +154,14 @@ export default function EventBookingsPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {filteredBookings.map((booking) => (
-            <Card key={booking.id} className="overflow-hidden">
-              <CardContent className="p-4">
+          {filteredBookings.map((booking) => {
+            const proofUrl = getAssetUrl(
+              booking.paymentProofUrl ?? booking.paymentProofPath,
+            );
+
+            return (
+              <Card key={booking.id} className="overflow-hidden">
+                <CardContent className="p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-start gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#C14FE6]/10">
@@ -178,8 +184,12 @@ export default function EventBookingsPage() {
                         </span>
                         <span>
                           Proof:{" "}
-                          <span className={booking.paymentProofUrl ? "text-emerald-600" : "text-amber-600"}>
-                            {booking.paymentProofUrl ? "Uploaded" : "Missing"}
+                          <span
+                            className={
+                              proofUrl ? "text-emerald-600" : "text-amber-600"
+                            }
+                          >
+                            {proofUrl ? "Uploaded" : "Missing"}
                           </span>
                         </span>
                       </div>
@@ -197,12 +207,12 @@ export default function EventBookingsPage() {
 
                     {booking.status === "PENDING" && (
                       <div className="flex gap-2">
-                        {booking.paymentProofUrl ? (
+                        {proofUrl ? (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => {
-                              setActiveProofUrl(booking.paymentProofUrl);
+                              setActiveProofUrl(proofUrl);
                               setProofState("loading");
                             }}
                           >
@@ -263,9 +273,10 @@ export default function EventBookingsPage() {
                     {booking.organizerRemark}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 

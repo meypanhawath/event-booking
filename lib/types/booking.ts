@@ -43,6 +43,7 @@ export interface BookingResponse {
   id: number;
   totalAmount: number;
   paymentProofUrl: string | null;
+  paymentProofPath?: string | null;
   status: "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED";
   organizerRemark: string | null;
   bookedAt: string;
@@ -56,6 +57,7 @@ export interface OrganizerBookingResponse {
   id: number;
   totalAmount: number;
   paymentProofUrl: string | null;
+  paymentProofPath?: string | null;
   status: "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED";
   organizerRemark: string | null;
   bookedAt: string;
